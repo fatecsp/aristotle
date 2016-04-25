@@ -46,7 +46,7 @@
 
 socrates :-
    not( exists_frame ),
-   new( Frame,                      frame( 'Socrates - Monological Argumentation (version 1.0.7.5)' ) ),
+   new( Frame,                      frame( 'Socrates - Monological Argumentation (version 1.0.85)' ) ),
    new( MenuBar,                    menu_bar ),
    new( FileMenu,                   popup( file )),
    new( ToolsMenu,		    popup( tools ) ),
@@ -119,7 +119,7 @@ socrates :-
    send( Column_Left,  pen, 0),
    send( Column_Left,  gap,    size(0,0)),
    send( Column_Left,  left,   LeftDialog),
-   send( Column_Left,  append, bitmap(image('images/column_s.bmp'))),
+   send( Column_Left,  append, bitmap(image('resources/images/column_s.bmp'))),
    send( Frame, open, point( 50, 70 )).
 
 % Verify whether a frame already exists (being displayed).
