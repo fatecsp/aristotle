@@ -10,7 +10,7 @@ about :-
    send( Dialog, append, new( Editor, editor( new( text_buffer ), 64,10) ) ),
    send( Dialog, append, button( close, message( @prolog, close ) ) ),
    send_list( Editor, append,
-   ['Aristotle - Computational Argumentation (Version 1.0.85)\n
+   ['Aristotle - Computational Argumentation (Version 2)\n
      Copyright (c) 2013-2016. São Paulo Technological College.
      Department of Information Technology (FATEC-SP/CEETEPS).\n
      Available at http://www.ime.usp.br/~slago/aristotle.zip\n
