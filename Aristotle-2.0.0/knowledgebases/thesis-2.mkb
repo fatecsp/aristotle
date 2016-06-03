@@ -1,11 +1,6 @@
-r1: true then airbag(c).
-r2: true then expensive(c).
-r3: true then highspeed(c).
-r4: airbag(X) then safe(X).
-r5: explodes(X) then not safe(X).
-r6: highspeed(X) then not safe(X).
-r7: airbag(X) then explodes(X).
-r8: airbag(X) and expensive(X) then not explodes(X).
-r5 precedes r4.
-r6 precedes r4.
-r8 precedes r7.
+r1: true then p.
+r2: true then q.
+r3: true then r.
+r4: p and q then s.
+r5: r then t.
+r6: s and t then u.

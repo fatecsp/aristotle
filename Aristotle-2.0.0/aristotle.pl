@@ -19,7 +19,7 @@
 +----------------------------------------------------------------*/
 
 aristotle :-
-   new( Frame, frame( 'Aristotle 2.0.0 - Computational Argumentation' ) ),
+   new( Frame, frame( 'Aristotle 2 - Computational Argumentation' ) ),
    send( Frame,  append, new( Dialog, dialog ) ),
    var( aristotle:dialog, Dialog),
    send( Dialog, append, bitmap( image('./resources/images/aristotle.bmp' ) ) ),

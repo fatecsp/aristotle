@@ -12,7 +12,7 @@ loadfile( Caller, Extension ) :-
    var( Caller:picture, Picture ),
    filetype( Extension, Description ),
    new( Finder, finder),
-   get( Finder, file, open, [tuple(Description, Extension), tuple('Prolog', 'pl'), tuple('All files', '*')], FileName ),
+   get( Finder, file, open, [tuple(Description, Extension), tuple('Prolog', 'pl'),   tuple('All files', '*')], FileName ),
    get( file( FileName ), base_name, BaseName ),
    var( Caller:basename, @BaseName ),
    atomic_list_concat( [ 'Knowledgebase [', BaseName, ']' ], TabName),
@@ -45,11 +45,21 @@ savefile( Caller ) :-
    append(Prefix,[']'|_],Suffix),
    atom_chars(FileName,Prefix),
    var( Caller:tab_stack, TabStack ),
-   send( KnowledgebaseEditor, save, FileName ),
+   get( KnowledgebaseTab, name, TabName ),
+   atom_chars(TabName,L),
+   append(_,['['|R],L),
+   append(S,[']'|_],R),
+   atom_chars(A,S),
+   send( KnowledgebaseEditor, save, A),
    size_file(FileName,Size),
    send( KnowledgebaseEditor, caret, Size),
    send( TabStack, on_top, KnowledgebaseTab ),
-   send( KnowledgebaseEditor, editable, @on ).
+   send( KnowledgebaseEditor, editable, @on ), !.
+
+savefile( Caller ):-
+	( Caller = socrates
+	-> saveasfile(Caller,mkb)
+	;  saveasfile(Caller,dkb) ).
 
 saveasfile( Caller, Extension ) :-
    var( Caller:knowledgebase_editor, KnowledgebaseEditor ),
@@ -57,9 +67,10 @@ saveasfile( Caller, Extension ) :-
    var( Caller:tab_stack, TabStack ),
    filetype( Extension, Description ),
    new( Finder, finder),
-   get( Finder, file, save, [tuple(Description, Extension), tuple('Prolog', 'pl'), tuple('All files', '*')], FileName ),
-   get( file( FileName ), base_name, BaseName ),
-   atomic_list_concat( [ 'Knowledgebase [', BaseName, ']' ], TabName),
+   get( Finder, file, save, [tuple(Description, Extension), tuple('Prolog', 'pl'),   tuple('All files', '*')], FileName ),
+   %get( file( FileName ), base_name, BaseName ),
+   writeln(FileName),
+   atomic_list_concat( [ 'Knowledgebase [', FileName, ']' ], TabName),
    send( KnowledgebaseEditor, save, FileName ),
    size_file(FileName,Size),
    send( KnowledgebaseEditor, caret, Size),

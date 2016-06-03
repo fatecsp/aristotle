@@ -1,0 +1,8 @@
+c then b.                                % Line 1
+r2: b then f.                                % Line 2
+r3: c then not f.                            % Line 3
+r4: c and s then f.                          % Line 4
+r5: true then c.                              % Line 5
+true then s.                             % Line 6
+r3 precedes r2.                              % Line 7
+r4 precedes r3.                              % Line 8
