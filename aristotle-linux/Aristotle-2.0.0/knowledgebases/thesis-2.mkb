@@ -1,0 +1,6 @@
+r1: true then p.
+r2: true then q.
+r3: true then r.
+r4: p and q then s.
+r5: r then t.
+r6: s and t then u.
