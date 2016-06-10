@@ -2,6 +2,7 @@
 :- use_module(globvars).
 :- op(100, fy, not), op(101, xfy, and), op(102, xfx, then), op(103, xfx, :), op(104, xfx, believes), op(105, xfx, precedes).
 :- dynamic then/3, believes/2, precedes/2, vert/2, vertex/1, vertex/2, edge/2.
+:- discontiguous precedence_relation/2.
 
 updateKB(Caller) :-
    retractall(then(_, _, _)),
@@ -179,15 +180,13 @@ filtered(Closure,Precedences) :-
 % rules declared in the knowledge base.
 
 precedence_relation(implicit,Precedences) :-
-   findall(Label,(updateKB:then(Label,_,_) ; believes(_,then(Label,_,_))),Labels),
+   findall(Label,(then(Label,_,_) ; believes(_,then(Label,_,_))),Labels),
    findall(L1<L2,
 	   ( member(L1,Labels),
              member(L2,Labels),
              L1 \= L2,
 	     more_specific(L1,L2) ),
-	   Implicit),
-   transitive_closure(Implicit,Closure),
-   filtered(Closure,Precedences).
+	   Precedences).
 
 % more_specific(L1,L2): is true if: (1) L1 is not a presumption, (2) L1
 % and L2 are conflicting rules, (3) the antecedent of L2 can be derived
@@ -197,7 +196,6 @@ precedence_relation(implicit,Precedences) :-
 more_specific(L1,L2) :-
    rule(L1: A1 then C1),
    rule(L2: A2 then C2),
-   %A1 \= true, % <== ?
    neg(C1,C2),
    der(A2,A1),
    not(der(A1,A2)), !.

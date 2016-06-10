@@ -19,7 +19,7 @@
 +----------------------------------------------------------------*/
 
 aristotle :-
-   win_window_pos([show(false)]),
+   %win_window_pos([show(false)]),
    new( Frame, frame( 'Aristotle 2 - Computational Argumentation' ) ),
    send( Frame,  append, new( Dialog, dialog ) ),
    var( aristotle:dialog, Dialog),

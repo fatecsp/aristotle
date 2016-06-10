@@ -23,8 +23,7 @@
 /*----------------------------------------------------------------+
 | Operators' definition						  |
 +----------------------------------------------------------------*/
-
-:- export(':'/2).
+% :- export(':'/2).
 :- op(100,  fy, not).     % Negation operator
 :- op(101, xfy, and).     % Logical conjuntion operator
 :- op(102, xfx, then).    % Logical implication operator
@@ -50,7 +49,6 @@ socrates :-
    new( MenuBar,                    menu_bar ),
    new( FileMenu,                   popup( file )),
    new( ToolsMenu,		    popup( tools ) ),
-   new( HelpMenu,                   popup( help ) ),
    new( KnowledgebaseTab,           tab( knowledgebase ) ),
    new( DisplayTab,	            tab( display ) ),
    new( ArgumentsTab,               tab( arguments ) ),
@@ -77,9 +75,6 @@ socrates :-
    new( VerboseMenuItem,            menu_item( exhibit_dialogue, message( @prolog, verbose ) ) ),
    new( AutoLabelMenuItem,          menu_item( 'Number Lines',       message( @prolog, number_lines ) ) ),
    new( ShowPrecMenuItem,           menu_item( show_precedences, message( @prolog, show_precedences ) ) ),
-   new( RulesMenuItem,              menu_item( rules ) ),
-   new( RPrecedenceMenuItem,        menu_item( precedence_relations ) ),
-   new( AboutMenuItem,              menu_item( about ) ),
    var( socrates:frame, Frame ),
    var( socrates:knowledgebase_tab,	     KnowledgebaseTab ),
    var( socrates:display_tab,                DisplayTab ),
@@ -92,11 +87,11 @@ socrates :-
    var( socrates:tab_stack,                  TabStack ),
    var( socrates:rule_precedence_menu,       RulePrecedenceMenu ),
    var( socrates:picture,                    Picture),
+   var( socrates:current_path,		     @('')),
    send_list( Frame,                append, [ LeftDialog, RightDialog ] ),
-   send_list( MenuBar,              append, [ FileMenu, ToolsMenu, HelpMenu ] ),
+   send_list( MenuBar,              append, [ FileMenu, ToolsMenu ] ),
    send_list( FileMenu,             append, [ OpenMenuItem, NewMenuItem, SaveMenuItem, SaveAsMenuItem, QuitMenuItem] ),
    send_list( ToolsMenu,	    append, [ AutoLabelMenuItem,ShowPrecMenuItem,VerboseMenuItem]),
-   send_list( HelpMenu,             append, [ RulesMenuItem, RPrecedenceMenuItem, AboutMenuItem ] ),
    send_list( TabStack,             append, [ KnowledgebaseTab, DisplayTab, ArgumentsTab, DialogueTab ] ),
    send_list( LeftDialog,	    append, [MenuBar, TabStack, ArgumentsButton, ConflictsButton, DialogueButton, QuitButton ] ),
    send_list( RightDialog,          append, [RulePrecedenceMenu] ),

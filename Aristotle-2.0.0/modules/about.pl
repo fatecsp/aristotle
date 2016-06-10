@@ -11,8 +11,7 @@ about :-
    send( Dialog, append, button( close, message( @prolog, close ) ) ),
    send_list( Editor, append,
    ['Aristotle - Computational Argumentation (Version 2)\n
-     Copyright (c) 2013-2016. São Paulo Technological College.
-     Department of Information Technology (FATEC-SP/CEETEPS).\n
+     Copyright (c) 2013-2016 PEREIRA, SANTOS & LIRA.\n
      Available at http://www.ime.usp.br/~slago/aristotle.zip\n
      This is free software. There is ABSOLUTELY NO WARRANTY.
      Read LICENSE.txt for more information.

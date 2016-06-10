@@ -24,7 +24,7 @@
 % Definição de operadores
 % ------------------------------------------------------------------
 
-:- export(':'/2).
+%:- export(':'/2).
 :- op(100,  fy, not).      % Operador de negação.
 :- op(101, xfy, and).      % Operador lógico de conjunção.
 :- op(102, xfx, then).     % Operador de implicação.
@@ -53,7 +53,7 @@
 
 plato :-
     not(exists_frame),
-    new(Frame,                       frame('Plato - Dialogical Argumentation (Version 2.0.0)')),
+    new(Frame,                       frame('Plato - Dialogical Argumentation (version 2.0.0)')),
     new(MenuBar,                     menu_bar),
     new(FileMenu,                    popup(file)),
     new(OptionsMenu,                 popup(options)),
@@ -83,6 +83,7 @@ plato :-
     var(plato:tab_stack,             TabStack),
     var(plato:rule_precedence_menu,  RulePrecedenceMenu),
     var(plato:picture,               Picture),
+    var(plato:current_path,          @('')),
     new(ArgumentsButton,             button(arguments,           message(@prolog, arguments_click))),
     new(ConflictsButton,             button(conflicts,           message(@prolog, consist_prec))),
     new(DialogueButton,              button(dialogue,            message(@prolog, dialogue))),
@@ -93,7 +94,7 @@ plato :-
     new(QuitMenuItem,                menu_item(quit,             message(@prolog, close))),
     new(LearningMenuItem,            menu_item('Learning mode (off)',    message(@prolog, learning_mode))),
     new(ExplanationMenuItem,         menu_item('Explanation mode (off)', message(@prolog, explanation_mode))),
-    new(VerboseMenuItem,             menu_item('Verbose mode (off)',     message(@prolog, verbose_mode))),
+    new(VerboseMenuItem,             menu_item('Verbose mode (off)',     message(@prolog, verbose_mode),end_group := true)),
     var(plato:learning_menu_item,    LearningMenuItem),
     var(plato:explanation_menu_item, ExplanationMenuItem),
     var(plato:verbose_menu_item,     VerboseMenuItem),
@@ -135,8 +136,17 @@ plato :-
 % Função: Gera todos os argumentos.
 % Saídas: Mensagem confirmando a geração de argumentos.
 % Opções: Botão "Ok" para fechar a caixa de diálogo.
+
 arguments_click :-
-    arguments(yes),
+   var( plato:display_editor, DisplayEditor ),
+   updateKB( plato ),
+   ( get( DisplayEditor, selected, _ )
+   ->  var( plato:display_tab, DisplayTab ),
+       var( plato:tab_stack, TabStack ),
+       send( TabStack, on_top, DisplayTab )
+   ;   update_args,!, arguments_success ).
+
+arguments_success :-
     not(exists_dialog),
     new(Dialog, dialog('Argumentational System')),
     send(Dialog, append, text('All arguments were successfully generated.')),
@@ -207,17 +217,18 @@ acessa([V|Vs], _, A, L) :-
 % arguments(+File): gera os argumentos a partir das regras.
 % +File: define se as regras serão coletadas do arquivo (yes) ou,
 % caso contrário (no), da memória.
-arguments(File) :-
+
+arguments(Update) :-
     var(plato:display_editor, DisplayEditor),
-    (File = yes -> updateKB(plato); true),
+    ( Update=yes -> updateKB(plato); true),
     (get(DisplayEditor, selected, _)
     ->  var(plato:display_tab, DisplayTab),
         var(plato:tab_stack, TabStack),
         send(TabStack, on_top, DisplayTab)
-    ;   updateArgs).
+    ;   update_args).
 
 % Atualiza a visualização dos argumentos.
-updateArgs :-
+update_args :-
     var(plato:arguments_editor, ArgumentsEditor),
     var(plato:arguments_tab, ArgumentsTab),
     var(plato:tab_stack, TabStack),
@@ -338,7 +349,13 @@ add(A, B, A and B).
 % Exibe o grafo de decisão de coerência dos argumentos da base de
 % conhecimentos.
 conflicts :-
-    arguments(no),
+    update_args,
+    var(plato:picture, Picture),
+    send(Picture, clear),
+    draw_vertices,
+    draw_links.
+
+pconflicts :-
     var(plato:picture, Picture),
     send(Picture, clear),
     draw_vertices,
@@ -506,9 +523,7 @@ precedence_relation(implicit, Precedences) :-
 	    member(L2, Labels),
 	    L1 \= L2,
 	    more_specific(L1, L2)),
-	   Implicit),
-    transitive_closure(Implicit, Closure),
-    filtered(Closure, Precedences).
+	   Precedences).
 
 % more_specific(+L1,+L2): verdade se:
 % (1) L1 e L2 são rótulos de regras revogáveis
@@ -798,7 +813,6 @@ modify_name(Control, Name) :- var(Control, C), send(C, value, Name).
 
 % Exibe todas as possíveis precedências entre regras revogáveis.
 show_precedences :-
-   updateKB(plato), % remover-----------------------------------------------------------------------------------------
    var(plato:display_editor, DisplayEditor ),
    var(plato:display_tab, DisplayTab ),
    var(plato:tab_stack, TabStack ),
