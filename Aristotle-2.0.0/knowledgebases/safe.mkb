@@ -1,8 +1,0 @@
-r1: true then airbag.
-r2: true then expensive.
-r3: airbag then safe.
-r4: airbag then explode.
-r5: explode then not safe.
-r6: expensive then not explode.
-
-r4 precedes r6.

@@ -1,8 +1,0 @@
-true then play(martin,soccer).             % p
-true then coach(martin,basketball).        % q
-true then play(martin,basketball).         % r
-play(X,Y) then not coach(X,Y).             % not(q and r)
-r1: coach(X,Y) then not play(X,Y).
-r2: play(X,soccer) then not play(X,basketball). % p then not r
-% r2 precedes r1.
-

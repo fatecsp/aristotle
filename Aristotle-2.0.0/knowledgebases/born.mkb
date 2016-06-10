@@ -1,6 +1,0 @@
-true then speaker(hans,dutch).
-speaker(X,dutch) then speaker(X,german).
-r3: speaker(X,german) then not born(X,usa).
-speaker(X,dutch) then born(X,pennsylvania).
-r5: born(X,pennsylvania) then born(X,usa).
-r5 precedes r3.
