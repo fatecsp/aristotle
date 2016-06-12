@@ -12,8 +12,6 @@
 | Global Variables Definition                                     |
 +----------------------------------------------------------------*/
 
-% Define global variables
-
 :- module(globvars,[ var/2 ] ).
 
 var( Owner:Identifier, @Value ) :-

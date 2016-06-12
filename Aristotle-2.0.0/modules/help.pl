@@ -1,5 +1,5 @@
 /*----------------------------------------------------------------+
-|* Authors: Silvio P. Lago, Luiz F. Zarco & Lucio N. Lira.        |
+|* Authors: Silvio do Lago, Luiz F. Zarco & Lucio N. Lira.        |
 |* Institution: São Paulo Technological College (FATEC-SP).       |
 |* Copyright (c) 2013-2016					  |
 |*								  |

@@ -7,11 +7,10 @@
 |* The software source code is distributed under MIT License.     |
 |* Read LICENSE.txt for further information.			  |
 +----------------------------------------------------------------*/
+
 /*----------------------------------------------------------------+
 | Help on software usage	                                  |
 +----------------------------------------------------------------*/
-
-% help - about aristotle system
 
 :- module(help,[help/0]).
 

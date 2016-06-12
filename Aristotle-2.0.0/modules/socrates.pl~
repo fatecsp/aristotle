@@ -394,10 +394,7 @@ handles( Vertex1, Vertex2, Out, In) :-
    ; DeltaX < 0 -> ( DeltaY > 0 -> Out = dn, In = up ; Out = up, In = dn)
    ; Out=dn, In=up ).
 
-% Colour vertices as:
-%   - coherent (green)
-%   - incoherent (red)
-%   - undefined (yellow)
+% Colour vertices as coherent (green), incoherent (red) or undefined (yellow).
 
 colour_vertices :-
    findall(V/Vo, vertex(V,Vo), Vs),
@@ -768,7 +765,6 @@ coherent(A then C) :-
    forall(in(L,C and A),not((neg(L,N),member(_:agree(N),Narrative)))),
    forall(in(L,A),not((member(_:why(L),Narrative),not(member(_:agree(L),Narrative))))),
    forall(in(L,A),not((neg(L,N),member(_:why(N),Narrative),not(member(_:retract(N),Narrative))))).
-
 
 % defeating rules
 

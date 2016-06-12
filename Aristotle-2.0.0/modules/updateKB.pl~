@@ -8,6 +8,9 @@
 |* Read LICENSE.txt for further information.			  |
 +----------------------------------------------------------------*/
 
+/*----------------------------------------------------------------+
+| Knowledgebase Core Operations	                                  |
++----------------------------------------------------------------*/
 
 :- module(updateKB, [then/3, believes/2, precedes/2, vert/2, vertex/1, vertex/2, edge/2, updateKB/1]).
 :- use_module(globvars).
