@@ -130,7 +130,7 @@ plato :-
     send(Column_Left, pen, 0),
     send(Column_Left, gap,    size(0,0)),
     send(Column_Left, left,   LeftDialog),
-    send(Column_Left, append, bitmap(image('resources/images/column_p.bmp'))),
+    send(Column_Left, append, bitmap(image('resources/images/jpg/column_p.jpg'))),
     send(Frame, open, point(50, 70)).
 
 % Função: Gera todos os argumentos.

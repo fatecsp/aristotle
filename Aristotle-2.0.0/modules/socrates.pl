@@ -103,18 +103,18 @@ socrates :-
 	     send(Tab, append, Editor ) ) ),
    forall( member( Editor/Background, [ KnowledgebaseEditor/aliceblue, DisplayEditor/lavenderblush,
                                         ArgumentsEditor/aliceblue, DialogueEditor/ivory ] ),
-	   ( send( Editor, size, size( 70, 28 ) ),
+	   ( send( Editor, size, size( 70, 26 ) ),
 	     send( Editor, font, font( screen, normal, 12 ) ),
 	     send( Editor, colour, darkblue ),
 	     send( Editor, background, Background ) ) ),
    send( LeftDialog, left, RightDialog ),
    send( RightDialog, gap, size( 15, 3 ) ),
    send( RightDialog, append, Picture ),
-   send( Picture, size, size( 480, 480 ) ),
+   send( Picture, size, size( 480, 450 ) ),
    send( Column_Left,  pen, 0),
    send( Column_Left,  gap,    size(0,0)),
    send( Column_Left,  left,   LeftDialog),
-   send( Column_Left,  append, bitmap(image('resources/images/column_s.bmp'))),
+   send( Column_Left,  append, bitmap(image('resources/images/column.gif'))),
    send( Frame, open, point( 50, 70 )).
 
 % Verify whether a frame already exists (being displayed).
@@ -149,7 +149,7 @@ consist_prec :-
    var( socrates:display_editor, DisplayEditor ),
    var( socrates:display_tab, DisplayTab ),
    var( socrates:tab_stack, TabStack ),
-   vértices(Vs),
+   vertices(Vs),
    findall(V->R,(member(V,Vs),acessa(V,ciclo(R))),L),
    findall(A,(member(T,L), term_to_atom(T,A)),P),
    P \= [],
@@ -164,10 +164,10 @@ consist_prec :- set_type,conflicts.
 
 % Draw vertices which represent the arguments
 
-vértices(Vértices) :-
+vertices(Vertices) :-
        findall([V,W],socrates:precedes(V,W),L),
        flatten(L,F),
-       sort(F,Vértices).
+       sort(F,Vertices).
 
 acessa(V,L) :-
 	acessa([V],nil,[],L).
