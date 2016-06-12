@@ -24,13 +24,14 @@
 
 :- module( socrates,[ socrates/0 ] ).
 
-:- use_module( modules/fbrowser ).
-:- use_module( modules/updateKB ).
-:- use_module( modules/globvars ).
+:- use_module( fbrowser ).
+:- use_module( updateKB ).
+:- use_module( globvars ).
 
 /*----------------------------------------------------------------+
 | Operators Declaration						  |
 +----------------------------------------------------------------*/
+
 :- op(100,  fy, not).                   % Negation operator
 :- op(101, xfy, and).                   % Logical conjuntion operator
 :- op(102, xfx, then).                  % Logical implication operator
@@ -44,7 +45,6 @@
 :- dynamic line/1.                      % Asserts each line of the dialogue on memory
 :- nb_setval(precedences,[]).		% Declare variable precedences
 :- flag(first_time,_,1).                % Creates a flag for dialogue start
-:- nb_setval(started,0).
 
 /*----------------------------------------------------------------+
 | Socrates' Graphical User Interface				  |
@@ -124,6 +124,10 @@ socrates :-
    send( Column_Left,  append, bitmap(image('resources/images/column.gif'))),
    send( Frame, open, point( 50, 70 )).
 
+/*----------------------------------------------------------------+
+| Window Management                                               |
++----------------------------------------------------------------*/
+
 % Verify whether a frame already exists (being displayed).
 
 exists_frame :-
@@ -145,78 +149,6 @@ close :-
    send(Frame, destroy).
 
 /*----------------------------------------------------------------+
-| Consistency Check                                               |
-+----------------------------------------------------------------*/
-
-% Function: Verify consistence between explict precedence rules
-% Output: Message indicating the existence of cycles (that conflicts
-% cannot be generated due to inconsistency)
-
-consist_prec :-
-   var( socrates:display_editor, DisplayEditor ),
-   var( socrates:display_tab, DisplayTab ),
-   var( socrates:tab_stack, TabStack ),
-   vertices(Vs),
-   findall(V->R,(member(V,Vs),acessa(V,ciclo(R))),L),
-   findall(A,(member(T,L), term_to_atom(T,A)),P),
-   P \= [],
-   Separator='\n--------------------------------------------------------------------\n',
-   atomics_to_string(['Error: cyclic precedence rules.',Separator],S),
-   atomic_list_concat([S|P],Ciclos),
-   send( TabStack, on_top, DisplayTab ),
-   send(DisplayEditor,clear),
-   send(DisplayEditor,append, Ciclos).
-
-consist_prec :- set_type,conflicts.
-
-% Draw vertices which represent the arguments
-
-vertices(Vertices) :-
-       findall([V,W],socrates:precedes(V,W),L),
-       flatten(L,F),
-       sort(F,Vertices).
-
-acessa(V,L) :-
-	acessa([V],nil,[],L).
-
-acessa([],_,A,acessa(L)) :-
-	reverse(A,L), !.
-
-acessa(_,A,A,ciclo(L)) :-
-	reverse(A,L), !.
-
-acessa([V|Vs],_,A,L) :-
-       findall(W,socrates:precedes(V,W),F),
-       union(Vs,F,N),
-       union([V],A,M),
-       acessa(N,A,M,L).
-
-/*----------------------------------------------------------------+
-| Automatic Number Lines                                          |
-+----------------------------------------------------------------*/
-
-number_lines :-
-   var( socrates:knowledgebase_editor, KnowledgebaseEditor ),
-   send( KnowledgebaseEditor, mark_whole_buffer ),
-   get( KnowledgebaseEditor, selected, Selection ),
-   get( Selection, value, Text ),
-   send( KnowledgebaseEditor, caret, 0 ),
-   send( KnowledgebaseEditor, editable, @on ),
-   split_string(Text, "\n", "", List),
-   delete(List,"",Rules),
-   send(KnowledgebaseEditor, clear),
-   forall(member(Rule,Rules),
-	  ( flag(counter,N,N+1),
-		(   Line is N+1,
-		    split_string(Rule, "%"," %",[String|_]),
-		    atom_length(String,L),
-		    Tab is 45-L,
-		    swritef( Spaces, '%r', [' ', Tab] ),
-		    atomics_to_string([String,Spaces,'% Line ',Line,'\n'],Numbered),
-	            send(KnowledgebaseEditor,append,Numbered) )
-	  )),flag(counter,N,0).
-
-/*----------------------------------------------------------------+
 | Argument Generation						  |
 +----------------------------------------------------------------*/
 
@@ -235,6 +167,8 @@ arguments_click :-
        send( TabStack, on_top, DisplayTab )
    ;   update_args,!, arguments_success ).
 
+% Generate arguments again, when conflicts resolution is altered
+
 arguments :-
    var( socrates:display_editor, DisplayEditor ),
    updateKB( socrates ),
@@ -243,6 +177,8 @@ arguments :-
        var( socrates:tab_stack, TabStack ),
        send( TabStack, on_top, DisplayTab )
    ;   update_args ).
+
+% Display success dialog message, if successfully generated
 
 arguments_success :-
    not(exists_dialog),
@@ -266,7 +202,26 @@ update_args :-
    send( TabStack, on_top, ArgumentsTab ),
    send( ArgumentsEditor, caret, 0 ).
 
+% Format the argument as text
+
+formatted( Number:Support, Text ) :-
+   term_to_atom( Number, N ),
+   atom_length( N, Length ),
+   Tab is Length + 5,
+   swritef( NewLine, ',\n%r', [' ', Tab] ),
+   join( NewLine, Support, Atoms ),
+   atomic_list_concat( ['A',N, ' : [' | Atoms], Text ).
+
+% Join the clauses in a list with a new line
+
+join( _, [N:Last], [Atom,']\n\n'] ) :- !, term_to_atom( N:Last, Atom ).
+
+join( NewLine, [N:First|Rest], [Atom,NewLine|Atoms] ) :-
+   term_to_atom( N:First, Atom ),
+   join( NewLine, Rest, Atoms ).
+
 % Generate all possible arguments
+% and build Attacks Graph
 
 all_arguments( Arguments ) :-
   retractall( vertex(_) ),
@@ -289,36 +244,6 @@ all_arguments( Arguments ) :-
 	    member( N2:S2, Arguments),
 	    N1 \= N2, attacks( S1, S2 ) ),
 	  assertz( edge(N1,N2) ) ).
-
-% Format the argument as text
-
-formatted( Number:Support, Text ) :-
-   term_to_atom( Number, N ),
-   atom_length( N, Length ),
-   Tab is Length + 5,
-   swritef( NewLine, ',\n%r', [' ', Tab] ),
-   join( NewLine, Support, Atoms ),
-   atomic_list_concat( ['A',N, ' : [' | Atoms], Text ).
-
-% Join the clauses in a list with a new line
-
-join( _, [N:Last], [Atom,']\n\n'] ) :- !, term_to_atom( N:Last, Atom ).
-
-join( NewLine, [N:First|Rest], [Atom,NewLine|Atoms] ) :-
-   term_to_atom( N:First, Atom ),
-   join( NewLine, Rest, Atoms ).
-
-% Verify whether S1 support attacks S2 support.
-
-attacks( Support1, Support2 ) :-
-   last( Support1, Rule1:then(_,Fact1) ),
-   member( Rule2:then(_C,Fact2), Support2 ),
-   neg( Fact1, Fact2 ),
-   not(prec( Rule2, Rule1)), !.
-
-% Verify what kind of precedence relation between rules will be used
-
-prec(Rule1,Rule2) :- nb_getval(precedences,Precedences), memberchk(Rule1<Rule2,Precedences).
 
 % Generate all possible claims
 
@@ -344,7 +269,7 @@ objects(Objects) :-
 
 % Localize all relevant predicates in the knowledgebase
 
-predicates(Predicates ) :-
+predicates(Predicates) :-
   findall(Predicate/Arity, (then(_,_,Conclusion),
 			      (Conclusion = not(Fact) -> Fact =.. [Predicate|Arguments]
 			      ; Conclusion =.. [Predicate|Arguments]),
@@ -376,6 +301,18 @@ argument(Fact and Facts, Partial, Support) :-
 add(true, B, B) :- !.
 add(A and B, C, A and D) :- add(B, C, D).
 add(A, B, A and B).
+
+% Verify whether S1 support attacks S2 support.
+
+attacks( Support1, Support2 ) :-
+   last( Support1, Rule1:then(_,Fact1) ),
+   member( Rule2:then(_C,Fact2), Support2 ),
+   neg( Fact1, Fact2 ),
+   not(prec( Rule2, Rule1)), !.
+
+% Verify what kind of precedence relation between rules will be used
+
+prec(Rule1,Rule2) :- nb_getval(precedences,Precedences), memberchk(Rule1<Rule2,Precedences).
 
 /*----------------------------------------------------------------+
 | Draw Conflicts Graph						  |
@@ -458,8 +395,8 @@ handles( Vertex1, Vertex2, Out, In) :-
    ; Out=dn, In=up ).
 
 % Colour vertices as:
-%   - true (green)
-%   - false (red)
+%   - coherent (green)
+%   - incoherent (red)
 %   - undefined (yellow)
 
 colour_vertices :-
@@ -480,10 +417,130 @@ colour_vertices(Vs) :-
 	   send(Wo, fill_pattern, colour(yellow))).
 
 /*----------------------------------------------------------------+
-|		    Automatic Persuasion Dialogue                 |
-|                                                                 |
-| the agent assumes both roles in the dialogue (i.e., pro and con)|
+| Consistency Check                                               |
 +----------------------------------------------------------------*/
+
+% Function: Verify consistence between explict precedence rules
+% Output: Message indicating the existence of cycles (that conflicts
+% cannot be generated due to inconsistency)
+
+consist_prec :-
+   var( socrates:display_editor, DisplayEditor ),
+   var( socrates:display_tab, DisplayTab ),
+   var( socrates:tab_stack, TabStack ),
+   vertices(Vs),
+   findall(V->R,(member(V,Vs),acessa(V,ciclo(R))),L),
+   findall(A,(member(T,L), term_to_atom(T,A)),P),
+   P \= [],
+   Separator='\n--------------------------------------------------------------------\n',
+   atomics_to_string(['Error: cyclic precedence rules.',Separator],S),
+   atomic_list_concat([S|P],Ciclos),
+   send( TabStack, on_top, DisplayTab ),
+   send(DisplayEditor,clear),
+   send(DisplayEditor,append, Ciclos).
+
+consist_prec :- set_type,conflicts.
+
+% Draw vertices which represent the arguments
+
+vertices(Vertices) :-
+       findall([V,W],socrates:precedes(V,W),L),
+       flatten(L,F),
+       sort(F,Vertices).
+
+acessa(V,L) :-
+	acessa([V],nil,[],L).
+
+acessa([],_,A,acessa(L)) :-
+	reverse(A,L), !.
+
+acessa(_,A,A,ciclo(L)) :-
+	reverse(A,L), !.
+
+acessa([V|Vs],_,A,L) :-
+       findall(W,socrates:precedes(V,W),F),
+       union(Vs,F,N),
+       union([V],A,M),
+       acessa(N,A,M,L).
+
+/*----------------------------------------------------------------+
+| Set Precedence Type (explicit, implicit or mixed)               |
++----------------------------------------------------------------*/
+
+:- retractall(ptype(_)), assert(ptype(none)).
+
+set_type :-
+   var( socrates:rule_precedence_menu, RulePrecedenceMenu ),
+   get( RulePrecedenceMenu, selected, explicit, Explicit ),
+   get( RulePrecedenceMenu, selected, implicit, Implicit ),
+   ( Explicit = @on,  Implicit = @off, !, explicit, nb_getval(explicit,V)
+   ; Explicit = @off, Implicit = @on,  !, implicit, nb_getval(implicit,V)
+   ; Explicit = @on,  Implicit = @on,  !, mixed,    nb_getval(mixed,V)
+   ; Explicit = @off, Implicit = @off, !, none, V=[]),
+   nb_setval(precedences,V).
+
+explicit :- retractall(ptype(_)), assert(ptype(explicit)).
+implicit :- retractall(ptype(_)), assert(ptype(implicit)).
+mixed    :- retractall(ptype(_)), assert(ptype(mixed)).
+none     :- retractall(ptype(_)), assert(ptype(none)).
+
+
+/*----------------------------------------------------------------+
+| Display Precedence Relation	                                  |
++----------------------------------------------------------------*/
+
+show_precedences :-
+   updateKB(socrates),
+   consist_prec,
+   var( socrates:display_editor, DisplayEditor ),
+   var( socrates:display_tab, DisplayTab ),
+   var( socrates:tab_stack, TabStack ),
+   send( TabStack, on_top, DisplayTab ),
+   nb_getval(explicit,Explicit), term_to_atom(Explicit,E),
+   nb_getval(implicit,Implicit), term_to_atom(Implicit,I),
+   nb_getval(mixed,Mixed),	 term_to_atom(Mixed,M),
+   Separator='\n--------------------------------------------------------------------\n',
+   send(DisplayEditor,clear),
+   atomic_list_concat(['Precedence Relations',Separator],Title),
+   send(DisplayEditor,append, Title),
+   atom_concat('Explicit: ',  E,EText), send(DisplayEditor,append, EText),
+   atom_concat('\nImplicit: ',I,IText), send(DisplayEditor,append, IText),
+   atom_concat('\nMixed:    ',M,MText), send(DisplayEditor,append, MText),
+   send(DisplayEditor,append, Separator),
+   ptype(SelectedType),
+   atomic_list_concat(['Currently using: ',SelectedType,Separator], CText),
+   send(DisplayEditor,append, CText).
+
+/*----------------------------------------------------------------+
+| Automatic Number Lines                                          |
++----------------------------------------------------------------*/
+
+number_lines :-
+   var( socrates:knowledgebase_editor, KnowledgebaseEditor ),
+   send( KnowledgebaseEditor, mark_whole_buffer ),
+   get( KnowledgebaseEditor, selected, Selection ),
+   get( Selection, value, Text ),
+   send( KnowledgebaseEditor, caret, 0 ),
+   send( KnowledgebaseEditor, editable, @on ),
+   split_string(Text, "\n", "", List),
+   delete(List,"",Rules),
+   send(KnowledgebaseEditor, clear),
+   forall(member(Rule,Rules),
+	  ( flag(counter,N,N+1),
+		(   Line is N+1,
+		    split_string(Rule, "%"," %",[String|_]),
+		    atom_length(String,L),
+		    Tab is 45-L,
+		    swritef( Spaces, '%r', [' ', Tab] ),
+		    atomics_to_string([String,Spaces,'% Line ',Line,'\n'],Numbered),
+	            send(KnowledgebaseEditor,append,Numbered) )
+	  )),flag(counter,N,0).
+
+/*----------------------------------------------------------------+
+|	          Automatic Persuasion Dialogue                   |
++----------------------------------------------------------------*/
+
+% Make dialogue start claim dialog
 
 dialogue :-
 	not(exists_dialog),
@@ -500,8 +557,10 @@ dialogue :-
 	send(D,open,point(880,280)).
 
 /*----------------------------------------------------------------+
-| Show dialogue step by step                                      |
+| Show Dialogue (step by step mode)                               |
 +----------------------------------------------------------------*/
+
+% Verify whether narrative started
 
 step(C) :-
    get(C, value, Text),
@@ -509,6 +568,8 @@ step(C) :-
    flag(first_time,V,0),
    (V=1 -> start_dialogue(Literal)),
    fail.
+
+% Show narrative, by each step
 
 step(_) :-
    var( socrates:dialogue_editor, DialogueEditor ),
@@ -520,6 +581,8 @@ step(_) :-
    retract(line(Text)),
    send(DialogueEditor,append,Text).
 
+% Enable start when not started
+
 step(_) :-
    var( socrates:dialogue_editor, DialogueEditor ),
    var( socrates:step_button, Step),
@@ -529,8 +592,10 @@ step(_) :-
    send(DialogueEditor,clear).
 
 /*----------------------------------------------------------------+
-| Show all dialogue at once                                       |
+| Show dialogue (at once mode)                                    |
 +----------------------------------------------------------------*/
+
+% Verify whether narrative started
 
 show(C) :-
 	get(C, value, Text),
@@ -538,6 +603,8 @@ show(C) :-
 	flag(first_time,V,0),
 	(V=1 -> start_dialogue(Literal)),
 	fail.
+
+% Show entire narrative, at once
 
 show(_) :-
 	var( socrates:dialogue_editor, DialogueEditor ),
@@ -549,9 +616,16 @@ show(_) :-
 	       retract(line(Text)) )      ),
 	flag(first_time,_,1).
 
+% Update editor for new exhibition
+
 show(_) :-
 	var( socrates:dialogue_editor, DialogueEditor ),
 	send(DialogueEditor,clear).
+
+
+/*----------------------------------------------------------------+
+| Start Persuasion Dialogue					  |
++----------------------------------------------------------------*/
 
 % Start Dialogue: simulates a persuasion dialogue whose goal is
 % to prove that Literal is justified by the Domain's knowledge.
@@ -571,6 +645,14 @@ start_dialogue(Literal) :-
    atomic_list_concat(['\n',Outcome,': ',L],Result),
    assertz(line(Result)),
    send( DialogueEditor?image, colour, C),!.
+
+% claim(+Rule,-Claim)
+
+claim(_:_ then C,C).
+
+/*----------------------------------------------------------------+
+| Simulate Dialogue						  |
++----------------------------------------------------------------*/
 
 % dialogue(+Act): simulates a dialogue between 'pro' and 'con'
 % (where both roles are played by the same agent), where pro tries
@@ -616,7 +698,7 @@ say(Agent:Locution) :-
    send( DialogueEditor, caret, 0 ).
 
 /*----------------------------------------------------------------+
-| Protocol rules                                                  |
+| Protocol Rules                                                  |
 +----------------------------------------------------------------*/
 
 % Transition rules (legal moves)
@@ -637,38 +719,11 @@ next(A:since(R),B:agree(F)  ) :- adv(A,B), claim(R,F).
 final(_:agree(_)).
 final(_:retract(_)).
 
-% Outcome rules
-% - Literal is the claimed fact
-% - Outcome is the result of the dialogue
-
-outcome(Literal,Outcome,Color) :-
-  nb_getval(narrative,Narrative),
-  Narrative \= [],
-  (  member(con:agree(Literal),Narrative)
-  -> (Outcome,Color) = ('Accepted',blue)
-  ;  (Outcome,Color) = ('Rejected',red) ).
-
 % adv(?Agent,?Adversary): is true if Agent and Adversary have
 % opposite roles in a soliloquy.
 
 adv(pro,con).
 adv(con,pro).
-
-% neg(?Literal,?Complement): is true if Literal and Complement are
-% complementary literals.
-
-neg(not(Proposition),Proposition) :- !.
-neg(Proposition,not(Proposition)).
-
-% coherent(+C): is true if the conjunction C is coherent with the
-% commitements of the agent in current state of the narrative.
-
-coherent(A then C) :-
-   nb_getval(narrative,Narrative),
-   forall(in(L,C and A),not(member(_:retract(L),Narrative))),
-   forall(in(L,C and A),not((neg(L,N),member(_:agree(N),Narrative)))),
-   forall(in(L,A),not((member(_:why(L),Narrative),not(member(_:agree(L),Narrative))))),
-   forall(in(L,A),not((neg(L,N),member(_:why(N),Narrative),not(member(_:retract(N),Narrative))))).
 
 % adduces(+R,+F): is true if rule R adduces fact F and is coherent with
 % the current state of the narrative.
@@ -693,13 +748,17 @@ attacks(B,S: C then N,R:_ then F) :-
    coherent(C then N),
    defeats(B,S,R).
 
-% claim(+Rule,-Claim)
+% coherent(+C): is true if the conjunction C is coherent with the
+% commitements of the agent in current state of the narrative.
 
-claim(_:_ then C,C).
+coherent(A then C) :-
+   nb_getval(narrative,Narrative),
+   forall(in(L,C and A),not(member(_:retract(L),Narrative))),
+   forall(in(L,C and A),not((neg(L,N),member(_:agree(N),Narrative)))),
+   forall(in(L,A),not((member(_:why(L),Narrative),not(member(_:agree(L),Narrative))))),
+   forall(in(L,A),not((neg(L,N),member(_:why(N),Narrative),not(member(_:retract(N),Narrative))))).
 
-/*----------------------------------------------------------------+
-| Defeating Rules		                                  |
-+----------------------------------------------------------------*/
+% defeating rules
 
 defeats(pro,S,R) :- prec(S,R), !.
 defeats(con,S,R) :- prec(S,R), !.
@@ -708,34 +767,27 @@ defeats(con,S,R) :- incomparable(S,R).
 incomparable(S,R) :- not(prec(S,R)), not(prec(R,S)).
 
 /*----------------------------------------------------------------+
-| Display Precedence Relation	                                  |
+| Outcome Rules				                          |
 +----------------------------------------------------------------*/
+% - Literal is the claimed fact
+% - Outcome is the result of the dialogue
 
-show_precedences :-
-   updateKB(socrates),
-   consist_prec,
-   var( socrates:display_editor, DisplayEditor ),
-   var( socrates:display_tab, DisplayTab ),
-   var( socrates:tab_stack, TabStack ),
-   send( TabStack, on_top, DisplayTab ),
-   nb_getval(explicit,Explicit), term_to_atom(Explicit,E),
-   nb_getval(implicit,Implicit), term_to_atom(Implicit,I),
-   nb_getval(mixed,Mixed),	 term_to_atom(Mixed,M),
-   Separator='\n--------------------------------------------------------------------\n',
-   send(DisplayEditor,clear),
-   atomic_list_concat(['Precedence Relations',Separator],Title),
-   send(DisplayEditor,append, Title),
-   atom_concat('Explicit: ',  E,EText), send(DisplayEditor,append, EText),
-   atom_concat('\nImplicit: ',I,IText), send(DisplayEditor,append, IText),
-   atom_concat('\nMixed:    ',M,MText), send(DisplayEditor,append, MText),
-   send(DisplayEditor,append, Separator),
-   ptype(SelectedType),
-   atomic_list_concat(['Currently using: ',SelectedType,Separator], CText),
-   send(DisplayEditor,append, CText).
+outcome(Literal,Outcome,Color) :-
+  nb_getval(narrative,Narrative),
+  Narrative \= [],
+  (  member(con:agree(Literal),Narrative)
+  -> (Outcome,Color) = ('Accepted',blue)
+  ;  (Outcome,Color) = ('Rejected',red) ).
 
 /*----------------------------------------------------------------+
 | Auxiliary Predicates		                                  |
 +----------------------------------------------------------------*/
+
+% neg(?Literal,?Complement): is true if Literal and Complement are
+% complementary literals.
+
+neg(not(Proposition),Proposition) :- !.
+neg(Proposition,not(Proposition)).
 
 % rule(?Rule): is true if Rule is in the knowledge base.
 
@@ -758,25 +810,6 @@ sset(A,B) :- forall(in(X,A),in(X,B)).
 
 verbose :- retract(verbose(active)), assert(verbose(inactive)), !.
 verbose :- retract(verbose(inactive)), assert(verbose(active)), !.
-
-% Set precedence type (explicit, implicit or mixed)
-
-:- retractall(ptype(_)), assert(ptype(none)).
-
-set_type :-
-   var( socrates:rule_precedence_menu, RulePrecedenceMenu ),
-   get( RulePrecedenceMenu, selected, explicit, Explicit ),
-   get( RulePrecedenceMenu, selected, implicit, Implicit ),
-   ( Explicit = @on,  Implicit = @off, !, explicit, nb_getval(explicit,V)
-   ; Explicit = @off, Implicit = @on,  !, implicit, nb_getval(implicit,V)
-   ; Explicit = @on,  Implicit = @on,  !, mixed,    nb_getval(mixed,V)
-   ; Explicit = @off, Implicit = @off, !, none, V=[]),
-   nb_setval(precedences,V).
-
-explicit :- retractall(ptype(_)), assert(ptype(explicit)).
-implicit :- retractall(ptype(_)), assert(ptype(implicit)).
-mixed    :- retractall(ptype(_)), assert(ptype(mixed)).
-none     :- retractall(ptype(_)), assert(ptype(none)).
 
 
 
