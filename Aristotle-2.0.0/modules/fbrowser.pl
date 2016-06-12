@@ -8,10 +8,12 @@
 |* Read LICENSE.txt for further information.			  |
 +----------------------------------------------------------------*/
 
+/*----------------------------------------------------------------+
+| File Browser							  |
++----------------------------------------------------------------*/
+
 :- module( fbrowser, [ loadfile/2, newfile/2, savefile/1, saveasfile/2 ] ).
-
 :- use_module( globvars ).
-
 :- pce_autoload( finder, library(find_file) ).
 
 loadfile( Caller, Extension ) :-
