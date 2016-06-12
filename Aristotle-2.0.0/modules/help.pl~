@@ -1,13 +1,3 @@
-/*----------------------------------------------------------------+
-|* Authors: Silvio P. Lago, Luiz F. Zarco & Lucio N. Lira.        |
-|* Institution: São Paulo Technological College (FATEC-SP).       |
-|* Copyright (c) 2013-2016					  |
-|*								  |
-|* This file is part of aristotle software source code.           |
-|* The software source code is distributed under MIT License.     |
-|* Read LICENSE.txt for further information.			  |
-+----------------------------------------------------------------*/
-
 % help - about aristotle system
 
 :- module(help,[help/0]).

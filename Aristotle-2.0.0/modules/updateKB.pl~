@@ -1,14 +1,3 @@
-/*----------------------------------------------------------------+
-|* Authors: Silvio P. Lago, Luiz F. Zarco & Lucio N. Lira.        |
-|* Institution: São Paulo Technological College (FATEC-SP).       |
-|* Copyright (c) 2013-2016					  |
-|*								  |
-|* This file is part of aristotle software source code.           |
-|* The software source code is distributed under MIT License.     |
-|* Read LICENSE.txt for further information.			  |
-+----------------------------------------------------------------*/
-
-
 :- module(updateKB, [then/3, believes/2, precedes/2, vert/2, vertex/1, vertex/2, edge/2, updateKB/1]).
 :- use_module(globvars).
 :- op(100, fy, not), op(101, xfy, and), op(102, xfx, then), op(103, xfx, :), op(104, xfx, believes), op(105, xfx, precedes).

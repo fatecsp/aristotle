@@ -1,14 +1,14 @@
 /*----------------------------------------------------------------+
-¦* Authors: Lucio N. Lira, Silvio P. Lago.                        ¦
-¦* Institution: São Paulo Technological College (FATEC-SP).       ¦
-¦* Copyright (c) 2013-2016					  ¦
-¦*								  ¦
-¦* This file is part of aristotle software source code.           ¦
-¦* The software source code is distributed under MIT License.     ¦
-¦* Read LICENSE.txt for further information.			  ¦
+|* Authors: Lucio N. Lira, Silvio P. Lago.                        |
+|* Institution: São Paulo Technological College (FATEC-SP).       |
+|* Copyright (c) 2013-2016					  |
+|*								  |
+|* This file is part of aristotle software source code.           |
+|* The software source code is distributed under MIT License.     |
+|* Read LICENSE.txt for further information.			  |
 +-----------------------------------------------------------------+
 ¦ Plato - a system for dialogical argumentation                   ¦
-¦                                                                 ¦
++-----------------------------------------------------------------+
 ¦ Plato (424/423 BC – 348/347 BC), was a Classical Greek          ¦
 ¦ philosopher, mathematician, student of plato, writer of         ¦
 ¦ philosophical dialogues, and founder of the Academy in Athens,  ¦

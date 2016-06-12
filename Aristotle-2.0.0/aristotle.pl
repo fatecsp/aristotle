@@ -1,12 +1,15 @@
-% Aristotle - Computational Argumentation and Defeasible Reasoning
+/*----------------------------------------------------------------+
+|	     Aristotle - Computational Argumentation		  |
++----------------------------------------------------------------*/
 
+% Modules Import
 :- use_module( modules/globvars ).
 :- use_module( modules/socrates ).
 :- use_module( modules/plato ).
 :- use_module( modules/help ).
 :- use_module( modules/about ).
 
-
+% Operators Declartion
 :- op(100,fy,not ).
 :- op(101,xfy,and ).
 :- op(102,xfx,then ).
@@ -15,11 +18,11 @@
 :- op(105,xfx,precedes ).
 
 /*----------------------------------------------------------------+
-| User interface						  |
+| Graphical User Interface					  |
 +----------------------------------------------------------------*/
 
 aristotle :-
-   %win_window_pos([show(false)]),
+   win_window_pos([show(false)]),
    new( Frame, frame( 'Aristotle 2 - Computational Argumentation' ) ),
    send( Frame,  append, new( Dialog, dialog ) ),
    var( aristotle:dialog, Dialog),
