@@ -394,10 +394,7 @@ handles( Vertex1, Vertex2, Out, In) :-
    ; DeltaX < 0 -> ( DeltaY > 0 -> Out = dn, In = up ; Out = up, In = dn)
    ; Out=dn, In=up ).
 
-% Colour vertices as:
-%   - coherent (green)
-%   - incoherent (red)
-%   - undefined (yellow)
+% Colour vertices as coherent (green), incoherent (red) or undefined (yellow).
 
 colour_vertices :-
    findall(V/Vo, vertex(V,Vo), Vs),
@@ -484,7 +481,6 @@ implicit :- retractall(ptype(_)), assert(ptype(implicit)).
 mixed    :- retractall(ptype(_)), assert(ptype(mixed)).
 none     :- retractall(ptype(_)), assert(ptype(none)).
 
-
 /*----------------------------------------------------------------+
 | Display Precedence Relation	                                  |
 +----------------------------------------------------------------*/
@@ -557,6 +553,15 @@ dialogue :-
 	send(D,open,point(880,280)).
 
 /*----------------------------------------------------------------+
+| Set Verbose Mode					          |
++----------------------------------------------------------------*/
+
+:- retractall(verbose(_)), assert(verbose(active)).
+
+verbose :- retract(verbose(active)), assert(verbose(inactive)), !.
+verbose :- retract(verbose(inactive)), assert(verbose(active)), !.
+
+/*----------------------------------------------------------------+
 | Show Dialogue (step by step mode)                               |
 +----------------------------------------------------------------*/
 
@@ -621,7 +626,6 @@ show(_) :-
 show(_) :-
 	var( socrates:dialogue_editor, DialogueEditor ),
 	send(DialogueEditor,clear).
-
 
 /*----------------------------------------------------------------+
 | Start Persuasion Dialogue					  |
@@ -748,6 +752,10 @@ attacks(B,S: C then N,R:_ then F) :-
    coherent(C then N),
    defeats(B,S,R).
 
+% rule(?Rule): is true if Rule is in the knowledge base.
+
+rule(Rule) :- findall(R:A then C,updateKB:then(R,A,C),Clauses), member(Rule,Clauses).
+
 % coherent(+C): is true if the conjunction C is coherent with the
 % commitements of the agent in current state of the narrative.
 
@@ -789,27 +797,12 @@ outcome(Literal,Outcome,Color) :-
 neg(not(Proposition),Proposition) :- !.
 neg(Proposition,not(Proposition)).
 
-% rule(?Rule): is true if Rule is in the knowledge base.
-
-rule(Rule) :- findall(R:A then C,updateKB:then(R,A,C),Clauses), member(Rule,Clauses).
-
 % in(?L,+C): is true if L is a literal in conjunction C.
 
 in(L,L) :- L \= true, L \= and(_,_).
 in(L,and(L,_)).
 in(L,and(_,C)) :- in(L,C).
 
-% sset(+A,+B): is true if each literal in conjunction A is also a
-% literal in conjunction B.
-
-sset(A,B) :- forall(in(X,A),in(X,B)).
-
-% Activate/Deactivate verbose mode
-
-:- retractall(verbose(_)), assert(verbose(active)).
-
-verbose :- retract(verbose(active)), assert(verbose(inactive)), !.
-verbose :- retract(verbose(inactive)), assert(verbose(active)), !.
 
 
 
