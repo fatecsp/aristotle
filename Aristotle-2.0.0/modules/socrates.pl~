@@ -1,5 +1,5 @@
 /*----------------------------------------------------------------+
-|* Authors: Luiz F. Zarco, Silvio do Lago.                        |
+|* Authors: Luiz F. Zarco, Silvio P. Lago.                        |
 |* Institution: São Paulo Technological College (FATEC-SP).       |
 |* Copyright (c) 2013-2016					  |
 |*								  |
@@ -31,21 +31,20 @@
 /*----------------------------------------------------------------+
 | Operators Declaration						  |
 +----------------------------------------------------------------*/
-% :- export(':'/2).
-:- op(100,  fy, not).     % Negation operator
-:- op(101, xfy, and).     % Logical conjuntion operator
-:- op(102, xfx, then).    % Logical implication operator
-:- op(103, xfx, :).       % Label rules operator
-:- op(105, xfx, precedes).% Precedence relation operator
-:- discontiguous precedence_relation/2.
-:- dynamic tmp/1.         % Temporary clause
-:- dynamic next/2.        % Next allowed speech act
-:- dynamic ptype/1.       % Precedence Type (explicit, implicit and mixed)
-:- dynamic verbose/1.     % Activates the output (speech acts)
-:- dynamic line/1.
-:- nb_setval(precedences,[]).
+:- op(100,  fy, not).                   % Negation operator
+:- op(101, xfy, and).                   % Logical conjuntion operator
+:- op(102, xfx, then).                  % Logical implication operator
+:- op(103, xfx, :).                     % Label rules operator
+:- op(105, xfx, precedes).              % Precedence relation operator
+:- discontiguous precedence_relation/2. % Indicate different file for predicate
+:- dynamic tmp/1.                       % Temporary clause
+:- dynamic next/2.		        % Next allowed speech act
+:- dynamic ptype/1.                     % Precedence Type (explicit, implicit and mixed)
+:- dynamic verbose/1.		        % Activates the output (speech acts)
+:- dynamic line/1.                      % Asserts each line of the dialogue on memory
+:- nb_setval(precedences,[]).		% Declare variable precedences
+:- flag(first_time,_,1).                % Creates a flag for dialogue start
 :- nb_setval(started,0).
-:- flag(first_time,_,1).
 
 /*----------------------------------------------------------------+
 | Socrates' Graphical User Interface				  |
@@ -379,7 +378,7 @@ add(A and B, C, A and D) :- add(B, C, D).
 add(A, B, A and B).
 
 /*----------------------------------------------------------------+
-| Draw conflicts graph						  |
+| Draw Conflicts Graph						  |
 +----------------------------------------------------------------*/
 
 conflicts :-
@@ -481,7 +480,8 @@ colour_vertices(Vs) :-
 	   send(Wo, fill_pattern, colour(yellow))).
 
 /*----------------------------------------------------------------+
-|		        PERSUASION DIALOGUE                       |
+|		    Automatic Persuasion Dialogue                 |
+|                                                                 |
 | the agent assumes both roles in the dialogue (i.e., pro and con)|
 +----------------------------------------------------------------*/
 
@@ -558,12 +558,9 @@ show(_) :-
 % The Domain is the name of a file with the Domain knowledebase.
 
 start_dialogue(Literal) :-
-   %send(@prolog, savefile, socrates),
    var( socrates:dialogue_editor, DialogueEditor ),
    send( DialogueEditor,clear),
    updateKB(socrates),
-   %set_type,
-   %loadkb,
    flag(arg,_,1),
    retractall(next(start,_)),
    asserta(next(start,pro:claim(Literal))),
@@ -574,20 +571,6 @@ start_dialogue(Literal) :-
    atomic_list_concat(['\n',Outcome,': ',L],Result),
    assertz(line(Result)),
    send( DialogueEditor?image, colour, C),!.
-
-/*----------------------------------------------------------------+
-| Knowledge base loading                                          |
-+----------------------------------------------------------------*/
-
-% load: get Clauses from updateKB
-% and set the precedence relation to be used.
-
-/*
-loadkb :-
-   findall(R:A then C,updateKB:then(R,A,C),Clauses),
-   nb_setval(kb,Clauses),
-   set_type.
-*/
 
 % dialogue(+Act): simulates a dialogue between 'pro' and 'con'
 % (where both roles are played by the same agent), where pro tries
@@ -715,7 +698,7 @@ attacks(B,S: C then N,R:_ then F) :-
 claim(_:_ then C,C).
 
 /*----------------------------------------------------------------+
-| Defeating rules		                                  |
+| Defeating Rules		                                  |
 +----------------------------------------------------------------*/
 
 defeats(pro,S,R) :- prec(S,R), !.
@@ -723,6 +706,10 @@ defeats(con,S,R) :- prec(S,R), !.
 defeats(con,S,R) :- incomparable(S,R).
 
 incomparable(S,R) :- not(prec(S,R)), not(prec(R,S)).
+
+/*----------------------------------------------------------------+
+| Display Precedence Relation	                                  |
++----------------------------------------------------------------*/
 
 show_precedences :-
    updateKB(socrates),
@@ -747,7 +734,7 @@ show_precedences :-
    send(DisplayEditor,append, CText).
 
 /*----------------------------------------------------------------+
-| Auxiliary predicates		                                  |
+| Auxiliary Predicates		                                  |
 +----------------------------------------------------------------*/
 
 % rule(?Rule): is true if Rule is in the knowledge base.
