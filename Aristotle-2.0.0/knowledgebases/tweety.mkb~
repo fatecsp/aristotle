@@ -1,0 +1,10 @@
+r1: true then bird(tweety).
+r2: true then penguin(tweety).
+r3: true then superhero(tweety).
+r4: bird(X) then fly(X).
+r5: penguin(X) then not fly(X).
+r6: superhero(X) then fly(X).
+r5 precedes r4.
+r6 precedes r5.
+
+%teste

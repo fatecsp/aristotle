@@ -26,6 +26,7 @@ loadfile( Caller, Extension ) :-
    get( Finder, file, open, [tuple(Description, Extension), tuple('Prolog', 'pl'),   tuple('All files', '*')], FileName ),
    get( file( FileName ), base_name, BaseName ),
    var( Caller:basename, @BaseName ),
+   var( Caller:current_path, @(FileName)),
    atomic_list_concat( [ 'Knowledgebase [', BaseName, ']' ], TabName),
    size_file( FileName, Size),
    send( KnowledgebaseEditor, load, FileName ),

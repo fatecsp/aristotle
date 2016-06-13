@@ -26,7 +26,7 @@ about :-
      Copyright (c) 2013-2016 PEREIRA, SANTOS & LIRA.\n
      Available at http://www.ime.usp.br/~slago/aristotle.zip\n
      This is free software. There is ABSOLUTELY NO WARRANTY.
-     Read LICENSE.txt for more information.
+     Read LICENSE.txt for further information.
        '] ),
    var( about:frame, Frame ),
    send( Editor, font, font( screen, normal, 12 ) ),
