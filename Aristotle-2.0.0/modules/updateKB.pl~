@@ -1,5 +1,5 @@
 /*----------------------------------------------------------------+
-|* Authors: Silvio P. Lago, Luiz F. Zarco & Lucio N. Lira.        |
+|* Authors: Silvio do Lago, Luiz F. Zarco & Lucio N. Lira.        |
 |* Institution: São Paulo Technological College (FATEC-SP).       |
 |* Copyright (c) 2013-2016					  |
 |*								  |
@@ -14,7 +14,12 @@
 
 :- module(updateKB, [then/3, believes/2, precedes/2, vert/2, vertex/1, vertex/2, edge/2, updateKB/1]).
 :- use_module(globvars).
-:- op(100, fy, not), op(101, xfy, and), op(102, xfx, then), op(103, xfx, :), op(104, xfx, believes), op(105, xfx, precedes).
+:- op(100, fy, not).
+:- op(101, xfy, and).
+:- op(102, xfx, then).
+:- op(103, xfx, :).
+:- op(104, xfx, believes).
+:- op(105, xfx, precedes).
 :- dynamic then/3, believes/2, precedes/2, vert/2, vertex/1, vertex/2, edge/2.
 :- discontiguous precedence_relation/2.
 
@@ -42,11 +47,11 @@ updateKB(Caller) :-
    clauses(Caller, Text, Clauses),
    forall(member(Clause, Clauses),
 	   catch(insertKB(Clause),
-		 Error,
-		 show_error(Caller, Error))),
-   findall(R: A then C, then(R, A ,C), Clauses2),
-   unflawed(Clauses2),
-   not(gratuitous(Clauses2)),
+	   Error,
+	   show_error(Caller, Error))),
+   findall(R: A then C, then(R, A ,C), SetOfClauses),
+   unflawed(SetOfClauses),
+   not(gratuitous(SetOfClauses)),
    precedence_relation(explicit, Explicit),
    precedence_relation(implicit, Implicit),
    precedence_relation(mixed,    Mixed),
@@ -56,15 +61,28 @@ updateKB(Caller) :-
    send(KnowledgebaseEditor, caret, 0),
    send(KnowledgebaseEditor, editable, @on).
 
-gratuitous(Clauses) :-
-   findall(R,( member(R,Clauses),gratuitous(R,Clauses)),G), G\=[],
-   show_error( socrates, error('Semantic Error -> gratuitous_consequent',G)).
+clauses( Caller, Text, Clauses ) :-
+   atom_chars( Text, CharList ),
+   split( Caller, CharList, SetOfClauses ),
+   subtract( SetOfClauses, [syntax_error], Clauses ).
 
-gratuitous(_:then(A,C),_) :- in(C,A), !.
-gratuitous(_:then(A1,C1),Clauses) :-
-   member(_:then(A2,C2),Clauses),
-   in(L1,A1), der(L1,C2),
-   in(L2,A2), der(L2,C1), !.
+split( Caller, CharList, [Clause|Clauses] ) :-
+   append( Prefix, ['.'|Rest], CharList ), !,
+   atom_chars( Text, Prefix ),
+   get_clause( Caller, Text, Clause ),
+   split( Caller, Rest, Clauses ).
+
+split( Caller, Text, [Clause] ) :-
+   get_clause( Caller, Text, Clause ).
+
+get_clause( Caller, Text, Clause ) :-
+   catch( read_from_chars( Text, Clause ),
+	  Error,
+	  ( show_error( Caller, Error ), Clause = syntax_error ) ).
+
+/*----------------------------------------------------------------+
+| Check if a set of clauses is consistent                         |
++----------------------------------------------------------------*/
 
 % unflawed(SetOfClauses): is true if all defeasible rules in
 % SetOfClauses are consistent rules.
@@ -87,44 +105,26 @@ consistent(then(Antecedent,Consequent)) :-
           member(Proposition2,[Consequent|Premises]),
           neg(Proposition1,Proposition2) ) ), !.
 
-clauses( Caller, Text, Clauses ) :-
-   atom_chars( Text, CharList ),
-   split( Caller, CharList, SetOfClauses ),
-   subtract( SetOfClauses, [syntax_error], Clauses ).
+/*----------------------------------------------------------------+
+| Check if a set of clauses is gratuitous                         |
++----------------------------------------------------------------*/
 
-split( Caller, CharList, [Clause|Clauses] ) :-
-   append( Prefix, ['.'|Rest], CharList ), !,
-   atom_chars( Text, Prefix ),
-   get_clause( Caller, Text, Clause ),
-   split( Caller, Rest, Clauses ).
+gratuitous(Clauses) :-
+   findall(R,( member(R,Clauses),gratuitous(R,Clauses)),G), G\=[],
+   show_error( socrates, error('Semantic Error -> gratuitous_consequent',G)).
 
-split( Caller, Text, [Clause] ) :-
-   get_clause( Caller, Text, Clause ).
+gratuitous(_:then(A,C),_) :- in(C,A), !.
+gratuitous(_:then(A1,C1),Clauses) :-
+   member(_:then(A2,C2),Clauses),
+   in(L1,A1), der(L1,C2),
+   in(L2,A2), der(L2,C1), !.
 
-get_clause( Caller, Text, Clause ) :-
-   catch( read_from_chars( Text, Clause ),
-	  Error,
-	  ( show_error( Caller, Error ), Clause = syntax_error ) ).
+neg(not(Proposition),Proposition) :- !.
+neg(Proposition,not(Proposition)).
 
-show_error( Caller, error( syntax_error( ErrorType ), string( String, ErrorPosition ) )) :-
-   var( Caller:display_editor, DisplayEditor ),
-   atom_chars( String, CharList ),
-   length( PrefixWithError, ErrorPosition ),
-   append( PrefixWithError, _, CharList ),
-   atom_chars( AtomicPrefixWithError, PrefixWithError ),
-   atomic_list_concat( [ ErrorType,': ', AtomicPrefixWithError], Message ),
-   Separator='\n--------------------------------------------------------------------\n',
-   atomic_list_concat( ['Syntax Error -> ', Message, Separator],Text),
-   send( DisplayEditor, append, Text ), !.
-
-show_error( Caller, error(Type,Error)) :-
-   var( Caller:display_editor, DisplayEditor ),
-   term_to_atom( Error, Message ),
-   Separator='\n--------------------------------------------------------------------\n',
-   atomic_list_concat([Type,': ',Message,Separator],Text),
-   send( DisplayEditor, append, Text), !.
-
-% Insert a clause into the knowledgebase
+/*----------------------------------------------------------------+
+| Insert a clause into the knowledgebase                          |
++----------------------------------------------------------------*/
 
 insertKB(believes(A, then(P, Q))   ) :- !, flag(rule_number, R, R + 1), assertz(believes(A, then(R, P, Q))).
 insertKB(believes(A, R: then(P, Q))) :- !, assertz(believes(A, then(R, P, Q))).
@@ -139,10 +139,14 @@ insertKB(end_of_file               ) :- !.
 insertKB(P		           ) :- !, flag(rule_number, R, R + 1), assertz(then(R, true, P)).
 
 /*----------------------------------------------------------------+
-| Explicit preference relation                                    |
+| Empty Precedence Relation                                       |
 +----------------------------------------------------------------*/
 
 precedence_relation(none,[]).
+
+/*----------------------------------------------------------------+
+| Explicit Precedence Relation                                    |
++----------------------------------------------------------------*/
 
 % precedence_relation(explicit,-Precedences): is true if Precedences
 % is the set of explitit precedence rules synthesized from precedence
@@ -186,7 +190,7 @@ filtered(Closure,Precedences) :-
 	   Precedences).
 
 /*----------------------------------------------------------------+
-| Implicit precedence relation                                    |
+| Implicit Precedence Relation                                    |
 +----------------------------------------------------------------*/
 
 % precedence_relation(implicit,-Precedences): is true if Precedences is
@@ -214,9 +218,6 @@ more_specific(L1,L2) :-
    der(A2,A1),
    not(der(A1,A2)), !.
 
-neg(not(Proposition),Proposition) :- !.
-neg(Proposition,not(Proposition)).
-
 rule(L: A then C) :- then(L,A,C).
 rule(L: A then C) :- believes(_, then(L,A,C)).
 
@@ -229,7 +230,7 @@ der(C1,C2) :-
    setof(L,in(L,C2),Ls),
    forall(in(L,C1),ddt([L],Ls)).
 
-% defeasible derivation tree
+% Defeasible Derivation Tree
 
 ddt([L|H],_) :- memberchk(L,H), !, fail. % avoid cyclic rules
 ddt([L|_],Ls) :- memberchk(L,Ls), !.
@@ -242,7 +243,7 @@ in(L,and(L,_)).
 in(L,and(_,C)) :- in(L,C).
 
 /*----------------------------------------------------------------+
-| Mixed precedence relation                                       |
+| Mixed Precedence Relation                                       |
 +----------------------------------------------------------------*/
 
 % precedence_relation(mixed,-Precedences): is true if
@@ -308,7 +309,27 @@ weakest(Cycle,Explicit,Links) :-
 	     memberchk(L2<_,Explicit) ),  % precedes an explicit link
 	   Links).
 
+/*----------------------------------------------------------------+
+| Error Messages                                                  |
++----------------------------------------------------------------*/
 
+show_error( Caller, error( syntax_error( ErrorType ), string( String, ErrorPosition ) )) :-
+   var( Caller:display_editor, DisplayEditor ),
+   atom_chars( String, CharList ),
+   length( PrefixWithError, ErrorPosition ),
+   append( PrefixWithError, _, CharList ),
+   atom_chars( AtomicPrefixWithError, PrefixWithError ),
+   atomic_list_concat( [ ErrorType,': ', AtomicPrefixWithError], Message ),
+   Separator='\n--------------------------------------------------------------------\n',
+   atomic_list_concat( ['Syntax Error -> ', Message, Separator],Text),
+   send( DisplayEditor, append, Text ), !.
+
+show_error( Caller, error(Type,Error)) :-
+   var( Caller:display_editor, DisplayEditor ),
+   term_to_atom( Error, Message ),
+   Separator='\n--------------------------------------------------------------------\n',
+   atomic_list_concat([Type,': ',Message,Separator],Text),
+   send( DisplayEditor, append, Text), !.
 
 
 
