@@ -52,7 +52,7 @@
 
 socrates :-
    not( exists_frame ),
-   new( Frame,                      frame( 'Socrates - Monological Argumentation (Version 2.0.85)' ) ),
+   new( Frame,                      frame( 'Socrates - Monological Argumentation (Version 2.1.94)' ) ),
    new( MenuBar,                    menu_bar ),
    new( FileMenu,                   popup( file )),
    new( ToolsMenu,		    popup( tools ) ),
