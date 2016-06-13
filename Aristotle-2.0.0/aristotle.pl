@@ -20,9 +20,22 @@
 /*----------------------------------------------------------------+
 | Graphical User Interface					  |
 +----------------------------------------------------------------*/
+aristotle :-
+   catch(win_window_pos([show(false)]),_,true),
+   new( Frame, frame( 'Aristotle 2 - Computational Argumentation' ) ),
+   send( Frame,  append, new( Dialog, dialog ) ),
+   var( aristotle:dialog, Dialog),
+   send( Dialog, append, bitmap( image('./resources/images/aristotle.jpg' ) ) ),
+   send( Dialog, append, button( socrates, message( @prolog, socrates ) ) ),
+   send( Dialog, append, button( plato,    message( @prolog, plato ) ) ),
+   send( Dialog, append, button( help,     message( @prolog, help ) ) ),
+   send( Dialog, append ,button( about,    message( @prolog, about) ) ),
+   send( Dialog, append, button( quit,     message( @prolog, close_all ) ) ),
+   send( Dialog, gap, size(0, 30)),
+   send( Dialog, gap, size( 3, 3 ) ),
+   send( Frame,  open, point( 0, 0 ) ).
 
 aristotle :-
-   win_window_pos([show(false)]),
    new( Frame, frame( 'Aristotle 2 - Computational Argumentation' ) ),
    send( Frame,  append, new( Dialog, dialog ) ),
    var( aristotle:dialog, Dialog),
