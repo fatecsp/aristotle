@@ -46,7 +46,7 @@
 
 :- dynamic aprende/1. % Define a possibilidade de aprendizado durante o diálogo.
 :- dynamic choice/1.  % Guarda a precedência mediada entre regras revogáveis.
-:- dynamic line/1.    %
+:- dynamic line/1.    % Insere as linhas do diálogo na memória.
 :- dynamic explain/1. % Define a necessidade de explicação total no diálogo.
 :- dynamic next/2.    % Define o próximo ato de fala permitido.
 :- dynamic ptype/1.   % Define o tipo de relação de precedência ativo.
@@ -60,6 +60,7 @@
 % ------------------------------------------------------------------
 
 plato :-
+    nb_setval(precedences, []),
     not(exists_frame),
     new(Frame,                       frame('Plato - Dialogical Argumentation (version 2.0.0)')),
     new(MenuBar,                     menu_bar),
@@ -148,6 +149,7 @@ plato :-
 arguments_click :-
    var( plato:display_editor, DisplayEditor ),
    updateKB( plato ),
+   %consist_prec(plato),
    ( get( DisplayEditor, selected, _ )
    ->  var( plato:display_tab, DisplayTab ),
        var( plato:tab_stack, TabStack ),
@@ -183,41 +185,45 @@ close :-
 % Saídas: (1) Mensagem indicando a existência de ciclos.
 %         (2) Mensagem indicando a verificação de consistência.
 %         (3) Mensagem indicando que os conflitos não podem ser gerados.
-consist_prec :-
-    vértices(Vs),
-    findall(V->R, (member(V, Vs), acessa(V, ciclo(R))), L),
-    findall(A, (member(T, L), term_to_atom(T, A)), P),
-    P \= [],
-    atomics_to_string(['Error: cyclic precedence rules.\n'], S),
-    atomic_list_concat([S|P], '\n', Ciclos),
-    not(exists_dialog),
-    new(D, dialog('plato\' Automatic Consistency Check')),
-    new(F, picture('box')),
-    send(F, display, text(Ciclos), point(20, 20)),
-    send(D, append, text('Conflicts cannot be generated.')),
-    send(D, append, F),
-    var(plato:dialog, D),
-    send(D, open).
+/*
+consist_prec(Caller) :-
+   var( Caller:display_editor, DisplayEditor ),
+   var( Caller:display_tab, DisplayTab ),
+   var( Caller:tab_stack, TabStack ),
+   vértices(Caller, Vs),
+   findall(V->R,(member(V,Vs),acessa(Caller, V,ciclo(R))),L),
+   findall(A,(member(T,L), term_to_atom(T,A)),P),
+   P \= [],
+   Separator='\n--------------------------------------------------------------------\n',
+   atomics_to_string(['Error: cyclic precedence rules.',Separator],S),
+   atomic_list_concat([S|P],Ciclos),
+   send( TabStack, on_top, DisplayTab ),
+   send(DisplayEditor,clear),
+   send(DisplayEditor,append, Ciclos).
 
-consist_prec :- set_type, conflicts.
+consist_prec(_) :- set_type, conflicts.
+*/
 
-vértices(Vértices) :-
-    findall([V,W], plato:precedes(V, W), L),
+consist_prec :- updateKB(plato),( consist_prec(plato) -> set_type, conflicts; true).
+
+/*
+vértices(Caller, Vértices) :-
+    findall([V,W], Caller:precedes(V, W), L),
     flatten(L, F),
     sort(F, Vértices).
 
-acessa(V,L) :- acessa([V], nil, [], L).
+acessa(Caller, V,L) :- acessa(Caller,[V], nil, [], L).
 
-acessa([], _, A, acessa(L)) :- reverse(A, L), !.
+acessa(_, [], _, A, acessa(L)) :- reverse(A, L), !.
 
-acessa(_, A, A, ciclo(L)) :- reverse(A, L), !.
+acessa(_, _, A, A, ciclo(L)) :- reverse(A, L), !.
 
-acessa([V|Vs], _, A, L) :-
-    findall(W, plato:precedes(V, W), F),
+acessa(Caller, [V|Vs], _, A, L) :-
+    findall(W, Caller:precedes(V, W), F),
     union(Vs, F, N),
     union([V], A, M),
-    acessa(N, A, M, L).
-
+    acessa(Caller, N, A, M, L).
+*/
 % ------------------------------------------------------------------
 % Geração de argumentos e atualizações
 % ------------------------------------------------------------------
@@ -225,7 +231,7 @@ acessa([V|Vs], _, A, L) :-
 % arguments(+File): gera os argumentos a partir das regras.
 % +File: define se as regras serão coletadas do arquivo (yes) ou,
 % caso contrário (no), da memória.
-
+/*
 arguments(Update) :-
     var(plato:display_editor, DisplayEditor),
     ( Update=yes -> updateKB(plato); true),
@@ -234,7 +240,7 @@ arguments(Update) :-
         var(plato:tab_stack, TabStack),
         send(TabStack, on_top, DisplayTab)
     ;   update_args).
-
+*/
 % Atualiza a visualização dos argumentos.
 update_args :-
     var(plato:arguments_editor, ArgumentsEditor),
@@ -456,177 +462,6 @@ colour_vertices(Vs) :-
 	   send(Wo, fill_pattern, colour(cornsilk))),
    colour_vertices([]).
 
-%+-----------------------------------------------------------------+
-%¦                     RELAÇÕES DE PRECEDÊNCIA                     ¦
-%¦	       (explícita, implícita, mista e mediada)             ¦
-%+-----------------------------------------------------------------+
-
-% ------------------------------------------------------------------
-% Relação de precedência vazia
-% ------------------------------------------------------------------
-
-precedence_relation(none, []).
-
-% ------------------------------------------------------------------
-% Relação de precedência explícita
-% ------------------------------------------------------------------
-
-% precedence_relation(+explicit,-Precedences): verdade se
-% Precedences é um conjunto de regras de precedência explícita
-% sintetizado das regras de precedência declaradas na base de
-% conhecimentos.
-precedence_relation(explicit, Precedences) :-
-    findall(L1<L2, precedes(L1, L2), Explicit),
-    transitive_closure(Explicit, Closure),
-    filtered(Closure, Precedences).
-
-% transitive_closure(+R,-T): verdade se o fecho transitivo da
-% relação binária acíclica R é T.
-transitive_closure(R, T) :-
-    acyclic(R),
-    setof(L1<L2, transition(L1, L2, R), T), !; T = [].
-
-% acyclic(+Relation): verdade se Relation é acíclico.
-% +Relation: relação de regras de precedência.
-acyclic([]) :- !.
-
-acyclic(Relation) :-
-    select(L1<_, Relation, NewRelation),
-    not(member(_<L1, Relation)),
-    acyclic(NewRelation), !.
-
-% transition(+L1,+L2,+R): verdade se a regra de precedência L1<L2
-% pode ser inferida da relação R, seja diretamente ou por
-% transitividade, ou seja, L1<Lx e Lx<L2.
-% +L1: Rótulo de uma regra revogável
-% +L2: Rótulo de uma regra revogável
-% +R:  Relação de regras de precedência
-transition(L1, L2, R) :- member(L1<L2, R).
-transition(L1, L2, R) :- member(L1<Lx, R), transition(Lx, L2, R).
-
-% filtered(+Closure,-Precedences): remove as regras de precedência entre
-% regras revogáveis que não têm consequentes complementares.
-% +Closure: fecho transitivo de regras de precedência
-% -Precedences: relação de regras de precedência filtrada
-filtered(Closure, Precedences) :-
-    findall(L1<L2,
-        (member(L1<L2, Closure),
-         believes(_, then(L1, _, Consequent1)),
-         believes(_, then(L2, _, Consequent2)),
-         neg(Consequent1, Consequent2)),
-	Precedences).
-
-% ------------------------------------------------------------------
-% Relação de precedência implícita
-% ------------------------------------------------------------------
-
-% precedence_relation(+implicit,-Precedences): é verdadeiro se
-% Precedences é o conjunto de regras de precedência implícita
-% sintetizado de regras revogáveis declaradas na base de
-% conhecimentos.
-precedence_relation(implicit, Precedences) :-
-    findall(Label, believes(_, then(Label,_,_)), Labels),
-    findall(L1<L2,
-	   (member(L1, Labels),
-	    member(L2, Labels),
-	    L1 \= L2,
-	    more_specific(L1, L2)),
-	   Precedences).
-
-% more_specific(+L1,+L2): verdade se:
-% (1) L1 e L2 são rótulos de regras revogáveis
-% (2) L1 não é uma presunção
-% (3) L1 e L2 têm consequentes complementares
-% (4) O antecedente de L2 pode ser derivado do antecedente de L1
-% (5) O antecedente de L1 não pode ser derivado do antecedente de L2
-more_specific(L1, L2) :-
-    rule(L1: A1 then C1),
-    rule(L2: A2 then C2),
-    A1 \= true,
-    neg(C1, C2),
-    der(A2, A1),
-    not(der(A1, A2)), !.
-
-% der(+C1,+C2): verdade se a conjunção C1 é revogavelmente
-% derivável da conjunção C2.
-der(C1, C2) :-
-    setof(L, in(L, C2), Ls),
-    forall(in(L, C1), ddt([L], Ls)).
-
-% Árvore de derivação revogável.
-ddt([L|H], _)  :- memberchk(L, H), !, fail. % Evita regras cíclicas
-ddt([L|_], Ls) :- memberchk(L, Ls), !.
-ddt([L|H], Ls) :-
-    rule(_: A then L), in(X, A),
-    ddt([X,L|H], Ls).
-
-% ------------------------------------------------------------------
-% Relação de precedência mista
-% ------------------------------------------------------------------
-
-% precedence_relation(+mixed,-Precedences): verdade se Precedences
-% é o conjunto de regras de precedência mista sintetizado da
-% integração das relações de precedência implícita e explícita.
-precedence_relation(mixed, Precedences) :-
-    precedence_relation(explicit, Explicit),
-    precedence_relation(implicit, Implicit),
-    integrate(Explicit, Implicit, Mixed),
-    transitive_closure(Mixed, Closure),
-    filtered(Closure, Precedences).
-
-% integrate(+E, +I, -M): Integra E e I em M (priorizando E).
-% +E: Lista com a relação de precedência explícita.
-% +I: Lista com a relação de precedência implícita.
-% -M: Lista com a relação de precedência mista.
-integrate(E, I, M) :-
-    union(E, I, U), % U será a união de E e I.
-    purge(U, E, M). % M será U purificado.
-
-% purge(+R, +E, -P): Gera P eliminando os cíclos de R (priorizando E).
-% +R: União das relações de precedências explícitas e implícitas.
-% +E: Lista com as relações de precedências explícitas.
-% -P: União purificada.
-purge(Relation, Explicit, Purged) :-
-    reject(Relation, Explicit, Links), !,
-    subtract(Relation, Links, NewRelation),
-    purge(NewRelation, Explicit, Purged).
-
-purge(Relation, _, Relation).
-
-% reject(+Relation,+Explicit,-Link): verdade se Relation é
-% cíclico e Link é o elo mais fraco em um cíclo mais curto nesta relação
-reject(Relation, Explicit, Links) :-
-    setof([L1], L2^member(L1<L2, Explicit), Sources),
-    shortest(Sources, Relation, Cycle),
-    weakest(Cycle, Explicit, Links), !,
-    Links \= [].
-
-% shortest(+ListOfSources,+Relation,-Cycle): verdade se Cycle é
-% um ciclo mais curto em Relation, começando de um dos rótulos
-% ListOfSources. Se Relation é acíclico, Cycle é um caminho vazio.
-shortest([], _, []) :- !.
-
-shortest([[Label|Labels]|_Paths], _Relation, [Label|Labels]) :-
-    member(Label, Labels), !.
-
-shortest([Path|Paths], Relation, Cycle) :-
-    Path = [Label|_],
-    findall([NextLabel|Path], member(Label<NextLabel, Relation), Successors),
-    append(Paths, Successors, NewForest),
-    shortest(NewForest, Relation, Cycle).
-
-% weakest(+Cycle, +Explicit, -Links): verdade se Links é o
-% conjunto de elos mais fracos em Cycle. Os elos mais fracos em Cycle
-% são todas as ligações implícitas (derivadas de precedências implícitas)
-% que precedem imediatamente uma ligação explícita (derivada de uma
-% precedência explícita).
-weakest(Cycle, Explicit, Links) :-
-    findall(L1<L2,
-        (append(_, [L2,L1|_], Cycle),
-	 not(member(L1<L2, Explicit)),
-	 memberchk(L2<_, Explicit)),
-	Links).
-
 % ------------------------------------------------------------------
 % Relação de precedência mediada
 % ------------------------------------------------------------------
@@ -662,7 +497,7 @@ reverse_pairs([(X<Y)|Resto1], [(Y<X)|Resto2]) :- reverse_pairs(Resto1, Resto2).
 % -E: lista final com as regras de precedência mediadas.
 escolhe([], Acumulador, Escolhidas) :- !, reverse(Acumulador, Escolhidas).
 
-escolhe([(L1<L2)|Opções], Acumulador, Escolhidas) :-
+escolhe([(L1<L2)|Opcoes], Acumulador, Escolhidas) :-
     ((acyclic([L1<L2|Acumulador]), acyclic([L2<L1|Acumulador]))
     -> choose([L1,L2])
     ;  true),
@@ -670,8 +505,8 @@ escolhe([(L1<L2)|Opções], Acumulador, Escolhidas) :-
     (L = L1 -> NovoAcumulador = [(L1<L2)|Acumulador]
     ;L = L2 -> NovoAcumulador = [(L2<L1)|Acumulador]
     ;NovoAcumulador = Acumulador),
-    subtract(Opções, [(L1<L2),(L2<L1)], NovaOpções),
-    escolhe(NovaOpções, NovoAcumulador, Escolhidas).
+    subtract(Opcoes, [(L1<L2),(L2<L1)], NovaOpcoes),
+    escolhe(NovaOpcoes, NovoAcumulador, Escolhidas).
 
 % choose(+[L1,L2]): Abre uma janela para escolha de uma precedência.
 % +[L1,L2]: lista com um par de rótulos de regras conflitantes.
@@ -870,7 +705,8 @@ start_dialogue(Literal) :-
 
 % Abre uma janela para a inserção do literal que será defendido.
 dialogue :-
-    not(exists_dialog),
+    updateKB(plato),
+    ( exists_dialog -> var(plato:dialog, D), send(D,destroy) ; true),
     new(D, dialog('Persuasion Dialog')),
     new(T, text_item('Insert Claim')),
     send(D, append, T),

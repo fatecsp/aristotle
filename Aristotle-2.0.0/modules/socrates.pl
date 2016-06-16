@@ -43,7 +43,6 @@
 :- dynamic ptype/1.                     % Precedence Type (explicit, implicit and mixed)
 :- dynamic verbose/1.		        % Activates the output (speech acts)
 :- dynamic line/1.                      % Asserts each line of the dialogue on memory
-:- nb_setval(precedences,[]).		% Declare variable precedences
 :- flag(first_time,_,1).                % Creates a flag for dialogue start
 
 /*----------------------------------------------------------------+
@@ -51,6 +50,7 @@
 +----------------------------------------------------------------*/
 
 socrates :-
+   nb_setval(precedences,[]),	% Declare variable precedences
    not( exists_frame ),
    new( Frame,                      frame( 'Socrates - Monological Argumentation (Version 2.1.94)' ) ),
    new( MenuBar,                    menu_bar ),
@@ -413,52 +413,7 @@ colour_vertices(Vs) :-
    forall(member(_/Wo, Vs),
 	   send(Wo, fill_pattern, colour(yellow))).
 
-/*----------------------------------------------------------------+
-| Consistency Check                                               |
-+----------------------------------------------------------------*/
-
-% Function: Verify consistence between explict precedence rules
-% Output: Message indicating the existence of cycles (that conflicts
-% cannot be generated due to inconsistency)
-
-consist_prec :-
-   var( socrates:display_editor, DisplayEditor ),
-   var( socrates:display_tab, DisplayTab ),
-   var( socrates:tab_stack, TabStack ),
-   vertices(Vs),
-   findall(V->R,(member(V,Vs),acessa(V,ciclo(R))),L),
-   findall(A,(member(T,L), term_to_atom(T,A)),P),
-   P \= [],
-   Separator='\n--------------------------------------------------------------------\n',
-   atomics_to_string(['Error: cyclic precedence rules.',Separator],S),
-   atomic_list_concat([S|P],Ciclos),
-   send( TabStack, on_top, DisplayTab ),
-   send(DisplayEditor,clear),
-   send(DisplayEditor,append, Ciclos).
-
-consist_prec :- set_type,conflicts.
-
-% Draw vertices which represent the arguments
-
-vertices(Vertices) :-
-       findall([V,W],socrates:precedes(V,W),L),
-       flatten(L,F),
-       sort(F,Vertices).
-
-acessa(V,L) :-
-	acessa([V],nil,[],L).
-
-acessa([],_,A,acessa(L)) :-
-	reverse(A,L), !.
-
-acessa(_,A,A,ciclo(L)) :-
-	reverse(A,L), !.
-
-acessa([V|Vs],_,A,L) :-
-       findall(W,socrates:precedes(V,W),F),
-       union(Vs,F,N),
-       union([V],A,M),
-       acessa(N,A,M,L).
+consist_prec :- ( consist_prec(socrates) -> set_type, conflicts ; true).
 
 /*----------------------------------------------------------------+
 | Set Precedence Type (explicit, implicit or mixed)               |
@@ -487,7 +442,7 @@ none     :- retractall(ptype(_)), assert(ptype(none)).
 
 show_precedences :-
    updateKB(socrates),
-   consist_prec,
+   consist_prec(socrates),
    var( socrates:display_editor, DisplayEditor ),
    var( socrates:display_tab, DisplayTab ),
    var( socrates:tab_stack, TabStack ),

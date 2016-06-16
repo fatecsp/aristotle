@@ -1,0 +1,4 @@
+r1: true then a.
+r2: true then b.
+r1 precedes r2.
+r2 precedes r1.

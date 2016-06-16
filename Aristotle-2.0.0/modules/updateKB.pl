@@ -12,7 +12,7 @@
 | Knowledgebase Core Operations	                                  |
 +----------------------------------------------------------------*/
 
-:- module(updateKB, [then/3, believes/2, precedes/2, vert/2, vertex/1, vertex/2, edge/2, updateKB/1]).
+:- module(updateKB, [then/3, believes/2, precedes/2, vert/2, vertex/1, vertex/2, edge/2, updateKB/1,consist_prec/1,acyclic/1,transitive_closure/2,filtered/2]).
 :- use_module(globvars).
 :- op(100, fy, not).
 :- op(101, xfy, and).
@@ -24,6 +24,9 @@
 :- discontiguous precedence_relation/2.
 
 updateKB(Caller) :-
+   var(Caller:knowledgebase_editor,KnowledgebaseEditor),
+   get(KnowledgebaseEditor,modified,Modified),
+   Modified = @on, !,
    retractall(then(_, _, _)),
    retractall(believes(_, _)),
    retractall(precedes(_, _)),
@@ -52,6 +55,7 @@ updateKB(Caller) :-
    findall(R: A then C, then(R, A ,C), SetOfClauses),
    unflawed(SetOfClauses),
    not(gratuitous(SetOfClauses)),
+   consist_prec(Caller),
    precedence_relation(explicit, Explicit),
    precedence_relation(implicit, Implicit),
    precedence_relation(mixed,    Mixed),
@@ -59,7 +63,10 @@ updateKB(Caller) :-
    nb_setval(implicit, Implicit),
    nb_setval(mixed,    Mixed),
    send(KnowledgebaseEditor, caret, 0),
-   send(KnowledgebaseEditor, editable, @on).
+   send(KnowledgebaseEditor, editable, @on),
+   send(KnowledgebaseEditor, modified, @off).
+
+updateKB(_).
 
 clauses( Caller, Text, Clauses ) :-
    atom_chars( Text, CharList ),
@@ -79,6 +86,53 @@ get_clause( Caller, Text, Clause ) :-
    catch( read_from_chars( Text, Clause ),
 	  Error,
 	  ( show_error( Caller, Error ), Clause = syntax_error ) ).
+
+/*----------------------------------------------------------------+
+| Consistency Check                                               |
++----------------------------------------------------------------*/
+
+% Function: Verify consistence between explict precedence rules
+% Output: Message indicating the existence of cycles (that conflicts
+% cannot be generated due to inconsistency)
+
+consist_prec(Caller) :-
+   var( Caller:display_editor, DisplayEditor ),
+   var( Caller:display_tab, DisplayTab ),
+   var( Caller:tab_stack, TabStack ),
+   vertices(Caller,Vs),
+   findall(V->R,(member(V,Vs),acessa(Caller,V,ciclo(R))),L),
+   findall(A,(member(T,L), term_to_atom(T,A)),P),
+   P \= [],
+   Separator='\n--------------------------------------------------------------------\n',
+   atomics_to_string(['Error: cyclic precedence rules.',Separator],S),
+   atomic_list_concat([S|P],Ciclos),
+   send( TabStack, on_top, DisplayTab ),
+   send(DisplayEditor,clear),
+   send(DisplayEditor,append, Ciclos), !, fail.
+
+consist_prec(_).
+
+% Draw vertices which represent the arguments
+
+vertices(Caller,Vertices) :-
+       findall([V,W],Caller:precedes(V,W),L),
+       flatten(L,F),
+       sort(F,Vertices).
+
+acessa(Caller,V,L) :-
+	acessa(Caller,[V],nil,[],L).
+
+acessa(_,[],_,A,acessa(L)) :-
+	reverse(A,L), !.
+
+acessa(_,_,A,A,ciclo(L)) :-
+	reverse(A,L), !.
+
+acessa(Caller,[V|Vs],_,A,L) :-
+       findall(W,Caller:precedes(V,W),F),
+       union(Vs,F,N),
+       union([V],A,M),
+       acessa(Caller,N,A,M,L).
 
 /*----------------------------------------------------------------+
 | Check if a set of clauses is consistent                         |

@@ -34,7 +34,8 @@ loadfile( Caller, Extension ) :-
    send( KnowledgebaseTab, name, TabName ),
    send( TabStack, on_top, KnowledgebaseTab ),
    send( KnowledgebaseEditor, editable, @on ),
-   send( Picture, clear ).
+   send( Picture, clear ),
+   send( KnowledgebaseEditor, modified, @on ).
 
 newfile( Caller, Extension ) :-
    var( Caller:knowledgebase_editor, KnowledgebaseEditor ),

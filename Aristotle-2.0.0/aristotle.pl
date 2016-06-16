@@ -21,7 +21,7 @@
 | Graphical User Interface					  |
 +----------------------------------------------------------------*/
 aristotle :-
-   catch(win_window_pos([show(false)]),_,true),
+   %catch(win_window_pos([show(false)]),_,true),
    new( Frame, frame( 'Aristotle 2 - Computational Argumentation' ) ),
    send( Frame,  append, new( Dialog, dialog ) ),
    var( aristotle:dialog, Dialog),
