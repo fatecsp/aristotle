@@ -1,0 +1,9 @@
+r1: true then c.
+r2: true then s.
+r3: true then d.
+r4: c then b.
+r5: b then f.
+r6: c then not f.
+r7: c and s then f.
+r8: c and d then not f.
+r8 precedes r7
