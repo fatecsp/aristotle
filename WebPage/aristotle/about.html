@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+	<head>
+	<link rel="stylesheet" type="text/css" href="style.css" media="all">
+		<meta charset="utf-8"/>
+		<title>Aristotle - Computational Argumentation</title>
+	</head>
+	<body>
+		<br/><h3> Computational Argumentation Framework </h3> 
+			  In artificial intelligence, traditionaly, a knowledge base is a set of
+		<br/> rules representing the knowledge of an expert in a specific domain. In
+		<br/> this context, there are no contradictions in the knowledge base and
+		<br/> undefeasible conclusions can be derived from it by the modus ponens
+		<br/> inference rule. In the context of argumentation, however, a knowledge
+		<br/> base combines the knowledge of multiple experts, who can have
+		<br/> divergent opinions about a same topic (i.e., the knowledge base can
+		<br/> have imperfect informations). In this case, another reasoning schema,
+		<br/> called modus non excipiens, must be used to derive defeasible
+		<br/> conclusions.
+		<br/>
+		<br/> Argumentation is a general technique to reason in the presence of
+		<br/> imperfect information, which involves the formulation of arguments
+		<br/> concerning a specific claim. Because arguments are normally
+		<br/> constructed from imperfect information, there are often
+		<br/> counterarguments for them. Arguments and counterarguments are usually
+		<br/> formulated from information, taken from a conflicting knowledge base,
+		<br/> which can be incomplete, inconsistent, uncertain or subjective.
+		<br/>
+		<br/> A conflicting knowledge base is composed of strict rules (i.e., rules
+		<br/> which have no exceptions) and defeasible rules (i.e., rules which have
+		<br/> exceptions). A strict rule has the form conditions -> conclusion (if
+		<br/> the conditions hold, then we necessarily have the conclusion),
+		<br/> whereas a defeasible rule has the form conditions >- conclusion (if
+		<br/> the conditions hold, then we possibly have the conclusion). In this
+		<br/> rules, 'conditions' is a conjuntion of literals (or a single literal)
+		<br/> and 'conclusion' is a single literal. A literal is an atom (e.g., p)
+		<br/> or the strong negation of an atom (i.e., ~p). Unlike negation as
+		<br/> failure (or weak negation), strong negation is not based on the Closed
+		<br/> World Assumption (CWA). It worth noticing that (i) a strict rule with
+		<br/> condition 'true' is a 'fact', whereas a defeasible rule with condition
+		<br/> 'true' is a 'presumption'; (ii) rules with variables are, in fact,
+		<br/> schemas for propositional rules). Rules are univocally numbered and,
+		<br/> if a defeasible rule i is an exception to another defeasible rule j,
+		<br/> then the declaration i>j must be included in the conflicting knowledge
+		<br/> base. For example, consider the following rules:
+	</body>
+</html>

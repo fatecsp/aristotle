@@ -1,0 +1,10 @@
+chicken(tina).
+chicken(bina).
+scared(tina).
+bird(X) then fly(X).
+chicken(X) then bird(X).
+r6: chicken(X) then not fly(X).
+chicken(X) and scared(X) then fly(X).
+superhero(bina).
+r9: superhero(X) then fly(X).
+r9 precedes r6.

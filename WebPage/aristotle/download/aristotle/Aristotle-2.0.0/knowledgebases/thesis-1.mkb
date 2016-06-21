@@ -1,0 +1,5 @@
+r1: p then b.
+r2: b then f.
+r3: p then not f.
+r4: true then p.
+r3 precedes r2.

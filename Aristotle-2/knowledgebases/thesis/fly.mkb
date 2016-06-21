@@ -6,4 +6,4 @@ r5: bird(X) then fly(X).
 r6: chicken(X) then not fly(X).
 r7: chicken(X) and scared(X) then fly(X).
 r8: chicken(X) and dead(X) then not fly(X).
-r8 precedes r7
+r8 precedes r7.
