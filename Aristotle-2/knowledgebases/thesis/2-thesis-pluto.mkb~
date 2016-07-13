@@ -1,0 +1,5 @@
+true then planet(pluto).
+true then orbit(pluto, sol).
+planet(x) and orbit(x,sol) then solar_system_planet(x).
+true then dwarf(pluto).
+dwarf(x) then not solar_system_planet(x).

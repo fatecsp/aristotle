@@ -574,7 +574,8 @@ show(_) :-
         forall( line(Text),
 	    (  send(DialogueEditor,append,Text),
 	       retract(line(Text)) )      ),
-	flag(first_time,_,1).
+	flag(first_time,_,1),
+        desenha_árvore.  % <========  MODIFICAÇÃO
 
 % Update editor for new exhibition
 
@@ -590,15 +591,24 @@ show(_) :-
 % to prove that Literal is justified by the Domain's knowledge.
 % The Domain is the name of a file with the Domain knowledebase.
 
+:- dynamic no/5.
+
 start_dialogue(Literal) :-
+
+   retractall(no(_,_,_,_,_)),
+   flag(node,_,1),
+
    var( socrates:dialogue_editor, DialogueEditor ),
    send( DialogueEditor,clear),
    updateKB(socrates),
    flag(arg,_,1),
    retractall(next(start,_)),
    asserta(next(start,pro:claim(Literal))),
+
+
    nb_setval(narrative,[]),
-   ignore(dialogue(start)),
+   ignore(dialogue(0,start)),
+
    outcome(Literal,Outcome,C),
    term_to_atom(Literal,L),
    atomic_list_concat(['\n',Outcome,': ',L],Result),
@@ -617,13 +627,23 @@ claim(_:_ then C,C).
 % (where both roles are played by the same agent), where pro tries
 % to defend a claim. To start the simulation, Act must be 'start'.
 
-dialogue(Act) :-
+dialogue(P,Act) :-
    next(Act,NextAct),
+
+   flag(node,N,N+1),
+
+   swritef(Atom,'<%w> %w',[N,NextAct]),
+
+%   term_to_atom(NextAct,Atom),
+   assertz(no(N,P,Atom,0,0)),
+
    new(NextAct),
    say(NextAct),
    upd(NextAct),
+
+
    not(final(NextAct)),
-   not(dialogue(NextAct)).
+   not(dialogue(N,NextAct)).
 
 % new(+Agent:+Locution): is true if Locution is new in the
 % narrative (only agent 'con' can repeat since locutions).
@@ -757,6 +777,131 @@ neg(Proposition,not(Proposition)).
 in(L,L) :- L \= true, L \= and(_,_).
 in(L,and(L,_)).
 in(L,and(_,C)) :- in(L,C).
+
+/*----------------------------------------------------------------+
+| Automatic Dialectical Tree Prototype				  |
++----------------------------------------------------------------*/
+
+:- dynamic vertice/2.
+
+desenha_árvore :-
+   new(Dialog,dialog('Dialectical Proof Tree')),
+   send(Dialog,append,new(Picture,picture)),
+   send(Dialog,gap,size(0,0)),
+   send(Dialog,size,size(700,350)),
+   new(_,constraint(Dialog,Picture,spatial(xref=x,yref=y,xref=x,yref=y,w2=w-25,h2=h-25))),
+   send(Dialog,open),
+   ajusta_coordenadas,
+
+   send(Picture,clear),
+   retractall(vertice(_,_)),
+
+   desenha(Picture,1),
+   desenha_arestas.
+
+% Desenha vértices da árvore
+%
+desenha(Picture,V) :-
+   forall( no(N,V,_,_,_), desenha(Picture,N)),
+   no(V,_,_,Xv,Yv),
+   desenha_vértice(Picture,V,Xv,Yv,O),
+   assertz(vertice(V,O)).
+
+
+% Desenha um vértice da árvore
+
+desenha_vértice(Picture,N,Xn,Yn,O) :-
+   X is Xn + 5, % *34
+   Y is Yn*55 + 5,
+   no(N,_,TT,_,_),
+   new(T,text(TT)),
+   get(T,width,W),
+   send(Picture,display,new(O,box(W+10,18)),point(X,Y)),
+   send(Picture,display,T,point(X,Y)),
+   ( not(no(_,N,_,_,_))  -> Colour = lightpink
+   ; (no(V,N,_,_,_),
+      vertice(V,O1),
+      get(O1,colour,colour(C)),
+      C=darkseagreen1) -> Colour=lightpink
+   ; Colour =  darkseagreen1),
+   send(O,fill_pattern,colour(Colour)),
+   send(O,colour,colour(Colour)),
+   send(T,font,font(curier,bold,11)),
+   new(_,constraint(O,T,identity(center))),
+   send(O,handle,handle(w/2,0,up)),
+   send(O,handle,handle(w/2,h,dn)),
+   send(O,recogniser,new(move_gesture(left))).
+
+
+% Desenha as arestas da árvore
+
+desenha_arestas :-
+   forall( ( no(F,P,_,_,_), F>1 ),
+	   ( vertice(P,Op),
+	     vertice(F,Of),
+	     new(Link,link(dn,up,new(L,line(arrows:=second)))),
+	     send(L,colour,gray29),
+	     send(Op,connect,Of,Link))).
+
+% Ajusta as coordenadas dos nós da árvore
+
+ajusta_coordenadas :-
+   forall((current_flag(Y),integer(Y)),flag(Y,_,0)),
+   posiciona_nó(1,0).
+
+% Posiciona o nó P na linha Yp
+
+posiciona_nó(P,Yp) :-
+   Yf is Yp+1,
+   forall(no(F,P,_,_,_),posiciona_nó(F,Yf)),
+   flag(Yp,X,X),
+   x_médio(P,Xm),
+   Xp is max(X,Xm),
+   define(P,Xp,Yp),
+   Dx is X-Xm,
+   forall((Xp>Xm,no(F,P,_,_,_)),move_filho(F,Dx)).
+
+% Determina a posição média Xm entre os filhos do nó P
+
+x_médio(P,Xm) :-
+   findall(X,no(_,P,_,X,_),Xs),
+   (  Xs = []
+   -> Xm is 0
+   ;  min_list(Xs,Xmin),
+      max_list(Xs,Xmax),
+      no(_,P,T,Xmax,_),
+      new(TT,text(T)),
+      get(TT,width,W),
+      free(TT),
+      no(P,_,Tp,_,_),
+
+            new(TTp,text(Tp)),
+      get(TTp,width,Wp),
+      free(TTp),
+
+
+      %get(TTp,width,Wp),
+      Xm is (Xmin+Xmax+W)/2 - Wp/2 ).
+
+% Define a posição do nó P como (X,Y)
+
+define(P,X,Y) :-
+   retract(no(P,A,T,_,_)),
+   assertz(no(P,A,T,X,Y)),
+         new(TT,text(T)),
+      get(TT,width,W),
+      free(TT),
+
+%   get(T,width,W),
+   flag(Y,_,X+W+20),!. % <==== separação horizontal
+
+% Move o nó P para a direita, adicionando Dx ao seu X
+
+move_filho(F,Dx) :-
+   (  no(F,_,_,X,Y)
+   -> define(F,X+Dx,Y),
+      forall(no(N,F,_,_,_),move_filho(N,Dx))
+   ;  true ).
 
 
 
