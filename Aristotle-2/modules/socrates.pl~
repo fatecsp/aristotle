@@ -575,7 +575,7 @@ show(_) :-
 	    (  send(DialogueEditor,append,Text),
 	       retract(line(Text)) )      ),
 	flag(first_time,_,1),
-        draw_tree.  % <========  MODIFICAÇÃO
+        desenha_árvore.  % <========  MODIFICAÇÃO
 
 % Update editor for new exhibition
 
