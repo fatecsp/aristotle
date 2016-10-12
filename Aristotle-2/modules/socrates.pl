@@ -71,7 +71,6 @@ socrates :-
    new( LeftDialog,                 dialog),
    new( Column_Left,                dialog),
    new( LeftButtons,                dialog),
-   new( RightButtons,		    dialog),
    new( ArgumentsButton,            button( arguments,           message( @prolog, arguments_click ) ) ),
    new( ConflictsButton,            button( conflicts,           message( @prolog, consist_prec ) ) ),
    new( DialogueButton,             button( dialogue,            message( @prolog, dialogue ) ) ),
@@ -782,6 +781,14 @@ neg(Proposition,not(Proposition)).
 in(L,L) :- L \= true, L \= and(_,_).
 in(L,and(L,_)).
 in(L,and(_,C)) :- in(L,C).
+
+/*----------------------------------------------------------------+
+| Auxiliary Predicates (CLI)                                      |
++----------------------------------------------------------------*/
+
+compute_global :- consist_prec.
+
+compute_local(Literal) :- start_dialog(Literal).
 
 /*----------------------------------------------------------------+
 | Automatic Dialectical Tree Prototype				  |
