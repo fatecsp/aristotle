@@ -788,7 +788,24 @@ in(L,and(_,C)) :- in(L,C).
 
 compute_global :- consist_prec.
 
-compute_local(Literal) :- start_dialog(Literal).
+compute_local(C) :-
+	get(C, value, Text),
+        read_from_chars(Text,Literal),
+	flag(first_time,V,0),
+	(V=1 -> start_dialogue(Literal)),
+	fail.
+
+compute_local(_) :-
+	var( socrates:dialogue_editor, DialogueEditor ),
+        flag(index,_,0),
+        forall( line(Text),
+	    (  send(DialogueEditor,append,Text),
+	       retract(line(Text)) )      ),
+	flag(first_time,_,1).
+
+compute_local(_) :-
+	var( socrates:dialogue_editor, DialogueEditor ),
+	send(DialogueEditor,clear).
 
 /*----------------------------------------------------------------+
 | Automatic Dialectical Tree Prototype				  |
