@@ -1,2 +1,0 @@
-born(X,brasil) then brasileiro(X).
-true then born(felipe,brasil).

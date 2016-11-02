@@ -1,7 +1,0 @@
-r1: b then f.
-r2: c then not f.
-r3: c and s then f.
-r4: c then b.
-r5: true then c.
-r2 precedes r1.
-r3 precedes r2.

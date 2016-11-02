@@ -1,5 +1,0 @@
-true then planet(pluto).
-true then orbit(pluto, sol).
-planet(X) and orbit(X,sol) then solar_system_planet(X).
-true then dwarf(pluto).
-dwarf(X) then not planet(X).

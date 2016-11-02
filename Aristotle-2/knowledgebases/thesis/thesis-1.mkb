@@ -1,0 +1,5 @@
+r1: penguin(X) then bird(X).
+r2: bird(X) then fly(X).
+r3: penguin(X) then not fly(X).
+r4: true then penguin(tweety).
+r3 precedes r2.

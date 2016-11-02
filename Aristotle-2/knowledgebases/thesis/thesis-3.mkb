@@ -1,0 +1,7 @@
+r1: chicken(X) then bird(X).
+r2: bird(X) then fly(X).
+r3: chicken(X) then not fly(X).
+r4: chicken(X) and scared(X) then fly(X).
+r5: true then chicken(tina).
+r3 precedes r2.
+r4 precedes r3.

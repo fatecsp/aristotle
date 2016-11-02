@@ -1,0 +1,2 @@
+born(X,brazil) then brazilian(X).
+true then born(felipe,brazil).

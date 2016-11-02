@@ -1,0 +1,11 @@
+r1: true then airbag(car).
+r2: true then quality(car).
+r3: true then highspeed(car).
+r4: airbag(X) then safe(X).
+r5: explodes(X) then not safe(X).
+r6: highspeed(X) then not safe(X).
+r7: airbag(X) then explodes(X).
+r8: airbag(X) and quality(X) then not explodes(X).
+r5 precedes r4.
+r6 precedes r4.
+r8 precedes r7
